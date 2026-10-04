@@ -1,0 +1,17 @@
+{
+  "appId": "com.eyegym.app",
+  "appName": "Гимнастика для глаз",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_eye",
+      "iconColor": "#5FD3C4"
+    }
+  }
+}

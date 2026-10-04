@@ -1,0 +1,1802 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Гимнастика для глаз</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: одна колонка до 560px — режимы, квадратная сцена с точкой (можно во весь экран), строка состояния, кнопки, темп, камера, рейтинг */
+:root{
+  --bg:#121826; --panel:#1B2436; --panel-2:#222D42;
+  --text:#E8ECF2; --text-dim:#97A2B6; --border:#2C3954;
+  --dot:#F4B740; --dot-ring:rgba(244,183,64,.35); --path:rgba(232,236,242,.13);
+  --accent:#5FD3C4; --on-accent:#0E1F1D; --fresh:rgba(95,211,196,.14);
+  --start:#F4B740; --on-start:#241A05;
+  --alert:#F08A8A; --alert-bg:#3B1E26; --alert-text:#FFE1E1; --alert-border:#7A3443;
+  --ok:#6BD49A; --warn:#F4B740;
+  --scrim:rgba(18,24,38,.92); --line:rgba(232,236,242,.1);
+  --knob:#FFFFFF; --shadow:rgba(0,0,0,.35);
+  --font:'Manrope',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#EEF1F6; --panel:#FFFFFF; --panel-2:#E4E9F1;
+    --text:#1A2232; --text-dim:#566174; --border:#CDD5E1;
+    --dot:#E3930B; --dot-ring:rgba(227,147,11,.35); --path:rgba(26,34,50,.14);
+    --accent:#17877A; --on-accent:#FFFFFF; --fresh:rgba(23,135,122,.12);
+    --start:#F4B740; --on-start:#241A05;
+    --alert:#C93D3D; --alert-bg:#FDECEC; --alert-text:#7A1A1A; --alert-border:#F2B8B8;
+    --ok:#1F8A54; --warn:#B26B00;
+    --scrim:rgba(238,241,246,.94); --line:rgba(26,34,50,.1);
+    --knob:#FFFFFF; --shadow:rgba(26,34,50,.18);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#EEF1F6; --panel:#FFFFFF; --panel-2:#E4E9F1;
+  --text:#1A2232; --text-dim:#566174; --border:#CDD5E1;
+  --dot:#E3930B; --dot-ring:rgba(227,147,11,.35); --path:rgba(26,34,50,.14);
+  --accent:#17877A; --on-accent:#FFFFFF; --fresh:rgba(23,135,122,.12);
+  --start:#F4B740; --on-start:#241A05;
+  --alert:#C93D3D; --alert-bg:#FDECEC; --alert-text:#7A1A1A; --alert-border:#F2B8B8;
+  --ok:#1F8A54; --warn:#B26B00;
+  --scrim:rgba(238,241,246,.94); --line:rgba(26,34,50,.1);
+  --knob:#FFFFFF; --shadow:rgba(26,34,50,.18);
+  color-scheme:light;
+}
+
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html{height:100%}
+body{
+  margin:0; min-height:100%; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:15px; line-height:1.5;
+  display:flex; justify-content:center;
+  padding-inline:16px; padding-block:24px 120px;
+}
+.wrap{width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px}
+.wrap > *{flex-shrink:0}
+header{display:flex; flex-direction:column; gap:4px}
+h1{font-size:1.35rem; font-weight:800; margin:0; letter-spacing:-.01em; text-wrap:balance}
+.sub{color:var(--text-dim); font-size:.92rem; margin:0; max-width:52ch}
+
+.modes{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text);
+  font:inherit; font-weight:600; font-size:.86rem; padding:8px 14px; border-radius:100px; cursor:pointer;
+}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.chip:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.stage{
+  position:relative; flex:none; width:100%; max-width:100%; aspect-ratio:1/1; background:var(--panel);
+  border:2px solid var(--border); border-radius:22px; overflow:hidden; transition:border-color .2s, box-shadow .2s;
+}
+.stage.moving{border-color:var(--alert)}
+.stage:fullscreen{width:100vw; height:100vh; max-width:none; aspect-ratio:auto; border:0; border-radius:0}
+.stage:-webkit-full-screen{width:100vw; height:100vh; max-width:none; aspect-ratio:auto; border:0; border-radius:0}
+.stage:fullscreen.moving{box-shadow:inset 0 0 0 6px var(--alert)}
+.stage:-webkit-full-screen.moving{box-shadow:inset 0 0 0 6px var(--alert)}
+.stage canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.stage-label{position:absolute; top:12px; left:50%; transform:translateX(-50%); pointer-events:none; font-size:1rem; font-weight:700; white-space:nowrap}
+.stage-hint{position:absolute; bottom:12px; left:16px; right:16px; text-align:center; font-size:.8rem; color:var(--text-dim); pointer-events:none}
+.stage.covered .stage-label, .stage.covered .stage-hint{visibility:hidden}
+
+.overlay{position:absolute; inset:0; display:flex; background:var(--scrim); padding:18px; overflow-y:auto}
+.ov-inner{margin:auto; width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center}
+.overlay p{margin:0}
+.ov-step{font-size:.8rem; color:var(--text-dim); font-weight:600}
+.ov-title{font-size:1.35rem; font-weight:800; text-wrap:balance}
+.ov-count{font-size:3rem; font-weight:800; line-height:1.1; color:var(--dot); font-variant-numeric:tabular-nums}
+.ov-text{color:var(--text-dim); font-size:.9rem; max-width:34ch}
+.summary{width:100%; max-width:340px; display:flex; flex-direction:column; gap:8px; text-align:left}
+.summary table{width:100%; border-collapse:collapse; font-size:.82rem; font-variant-numeric:tabular-nums}
+.summary th{font-weight:600; color:var(--text-dim); text-align:right; padding:2px 0 6px}
+.summary th:first-child, .summary td:first-child{text-align:left}
+.summary td{text-align:right; padding:4px 0; border-top:1px solid var(--line)}
+.summary tr.total td{font-weight:800}
+.summary p{font-size:.85rem}
+.sum-points{font-size:1.05rem; font-weight:800}
+.sum-record{color:var(--dot); font-weight:800}
+
+.progress{height:4px; border-radius:2px; background:var(--border); overflow:hidden; margin-top:-6px}
+.progress i{display:block; height:100%; width:0; background:var(--accent)}
+.status-row{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px 12px; min-height:1.3em; margin-top:-8px; font-size:.8rem; color:var(--text-dim)}
+.pills{display:flex; flex-wrap:wrap; gap:6px 14px; margin-left:auto}
+.pill{display:inline-flex; align-items:center; gap:6px; font-weight:700; color:var(--text)}
+.pill i{width:8px; height:8px; border-radius:50%; background:var(--ok)}
+.pill.bad{color:var(--alert)} .pill.bad i{background:var(--alert)}
+.pill.mid i{background:var(--warn)}
+
+.actions{display:flex; gap:10px}
+.btn{flex:1; border:1px solid transparent; border-radius:14px; padding:13px 16px; font:inherit; font-weight:700; font-size:.95rem; cursor:pointer}
+.btn-start{background:var(--start); color:var(--on-start)}
+.btn-start:disabled{opacity:.6; cursor:default}
+.btn-reset{background:var(--panel-2); color:var(--text); border-color:var(--border)}
+.btn-small{flex:none; padding:8px 12px; font-size:.84rem; border-radius:10px}
+.btn-danger{background:var(--alert-bg); color:var(--alert-text); border-color:var(--alert-border)}
+
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; min-width:0}
+.panel h2{font-size:.95rem; margin:0; font-weight:700}
+.note{font-size:.76rem; color:var(--text-dim); margin:0}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px}
+.field{display:flex; flex-direction:column; gap:6px; min-width:0}
+.field label{font-size:.8rem; color:var(--text-dim)}
+.field label b{color:var(--text); font-weight:700}
+input[type=range]{width:100%; accent-color:var(--accent)}
+input[type=text], select{
+  width:100%; font:inherit; font-size:.9rem; color:var(--text); background:var(--panel-2);
+  border:1px solid var(--border); border-radius:10px; padding:8px 10px;
+}
+.check{display:flex; gap:10px; align-items:flex-start; cursor:pointer}
+.check input{margin-top:3px; width:18px; height:18px; accent-color:var(--accent); flex:none}
+.check span{display:flex; flex-direction:column; gap:2px; font-size:.86rem}
+
+.toggle-row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.toggle-row .txt{min-width:0; display:flex; flex-direction:column; gap:2px}
+.switch{position:relative; width:44px; height:26px; flex:none}
+.switch input{position:absolute; inset:0; opacity:0; margin:0; cursor:pointer}
+.switch .track{position:absolute; inset:0; border-radius:100px; background:var(--border); pointer-events:none; transition:background .15s}
+.switch .track::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--knob); transition:transform .15s}
+.switch input:checked + .track{background:var(--accent)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.switch input:focus-visible + .track{outline:2px solid var(--accent); outline-offset:2px}
+
+.cam-status{margin:0; font-size:.84rem; font-weight:600}
+.cam-error{margin:0; font-size:.82rem; color:var(--alert)}
+.gaze-row{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--line)}
+.gaze-row .check{flex:1 1 220px; min-width:0}
+.btn-small:disabled{opacity:.55; cursor:default}
+.cam-body{display:grid; grid-template-columns:120px 1fr; gap:14px; align-items:center}
+.cam-preview{position:relative; width:120px; height:90px; border-radius:10px; overflow:hidden; background:var(--panel-2); border:1px solid var(--border)}
+.cam-preview video, .cam-preview canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block}
+.meter{position:relative; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden}
+.meter i{position:absolute; left:0; top:0; bottom:0; width:0; background:var(--ok)}
+.meter.over i{background:var(--alert)}
+.meter s{position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background:var(--text-dim)}
+
+.rating-table-wrap{overflow-x:auto}
+.rating-table{width:100%; border-collapse:collapse; font-size:.84rem; font-variant-numeric:tabular-nums}
+.rating-table th{font-weight:600; color:var(--text-dim); text-align:right; padding:4px 6px 6px; white-space:nowrap}
+.rating-table td{text-align:right; padding:6px; border-top:1px solid var(--line); white-space:nowrap}
+.rating-table th:nth-child(2), .rating-table td:nth-child(2){text-align:left; white-space:normal; overflow-wrap:anywhere}
+.rating-table th:first-child, .rating-table td:first-child{text-align:left}
+.rating-table td.pts{font-weight:800}
+.rating-table tr.me td{background:var(--fresh)}
+.rating-table tr.me td:nth-child(2){font-weight:700}
+.rating-empty{margin:0; font-size:.86rem; color:var(--text-dim)}
+.rating-foot{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between}
+.confirm{display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:.84rem}
+
+.disclaimer{font-size:.76rem; line-height:1.55; color:var(--text-dim); margin:0}
+
+.head-alert{
+  position:fixed; z-index:20; left:16px; right:16px; margin-inline:auto; max-width:528px;
+  bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+  display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:14px;
+  background:var(--alert-bg); color:var(--alert-text); border:1px solid var(--alert-border);
+  box-shadow:0 10px 28px var(--shadow); animation:alert-in .18s ease-out; pointer-events:none; text-align:left;
+}
+.head-alert svg{flex:none; width:26px; height:26px; color:var(--alert)}
+.head-alert div{display:flex; flex-direction:column; min-width:0}
+.head-alert strong{font-size:.95rem}
+.head-alert span{font-size:.84rem}
+@keyframes alert-in{from{transform:translateY(12px); opacity:0} to{transform:none; opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .head-alert{animation:none}
+  .stage, .switch .track, .switch .track::after{transition:none}
+}
+@media (max-width:380px){ .cam-body{grid-template-columns:1fr} }
+
+/* Приложение: перерывы 20-20-20, кнопки на экране «перерыв окончен», полноэкранная сцена на телефоне */
+.ov-actions{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px}
+.ov-actions .btn{flex:none; padding:10px 16px; font-size:.9rem}
+.rem-body{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; align-items:end}
+.rem-status{display:flex; flex-direction:column; gap:2px; font-size:.84rem}
+.rem-status b{font-weight:700}
+.rem-foot{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between}
+.stage.pseudo-fs{position:fixed; inset:0; z-index:30; width:auto; height:auto; max-width:none; aspect-ratio:auto; border:0; border-radius:0}
+.stage.pseudo-fs.moving{box-shadow:inset 0 0 0 6px var(--alert)}
+body.fs-lock{overflow:hidden}
+.stage-close{
+  position:absolute; z-index:6; top:calc(10px + env(safe-area-inset-top, 0px)); right:10px; width:40px; height:40px;
+  display:none; align-items:center; justify-content:center; border-radius:50%;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text); font:inherit; font-size:1.1rem; cursor:pointer;
+}
+.stage.pseudo-fs .stage-close{display:flex}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Гимнастика для глаз</h1>
+    <p class="sub">Следите глазами за точкой, не поворачивая головы. Сядьте прямо, экран на расстоянии вытянутой руки.</p>
+  </header>
+
+  <div class="modes" id="modes" role="group" aria-label="Упражнение"></div>
+
+  <div class="stage" id="stage">
+    <canvas id="canvas" aria-label="Точка, за которой нужно следить глазами"></canvas>
+    <div class="stage-label" id="stageTitle">Круг</div>
+    <div class="stage-hint" id="stageHint">Нажмите «Начать»</div>
+    <div class="overlay" id="overlay" hidden>
+      <div class="ov-inner">
+        <p class="ov-step" id="ovStep"></p>
+        <p class="ov-title" id="ovTitle"></p>
+        <p class="ov-count" id="ovCount"></p>
+        <p class="ov-text" id="ovText"></p>
+        <div class="summary" id="summary" hidden></div>
+        <div class="ov-actions" id="ovActions" hidden></div>
+      </div>
+    </div>
+    <button class="stage-close" id="stageClose" type="button" aria-label="Остановить и выйти из полноэкранного режима">✕</button>
+    <div class="head-alert" id="headAlert" role="alert" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <div>
+        <strong id="headAlertTitle">Голова двигается</strong>
+        <span id="headAlertText">Верните голову в исходное положение и следите за точкой только глазами</span>
+      </div>
+    </div>
+  </div>
+  <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+  <div class="status-row">
+    <span id="stageStep"></span>
+    <span class="pills">
+      <span class="pill" id="gazePill" hidden><i></i><span id="gazePillText"></span></span>
+      <span class="pill" id="headPill" hidden><i></i><span id="headPillText"></span></span>
+    </span>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-start" id="startBtn" type="button">Начать</button>
+    <button class="btn btn-reset" id="resetBtn" type="button">Сброс</button>
+  </div>
+
+  <section class="panel" id="breaksPanel" aria-labelledby="breaksTitle" hidden>
+    <div class="toggle-row">
+      <div class="txt">
+        <h2 id="breaksTitle">Перерывы 20-20-20</h2>
+        <p class="note">Каждые 20 минут работы — 20 секунд смотреть вдаль, на 6 метров и дальше. Так глаза расслабляются после долгой работы вблизи.</p>
+      </div>
+      <label class="switch" aria-label="Напоминать о перерывах">
+        <input type="checkbox" id="remToggle">
+        <span class="track"></span>
+      </label>
+    </div>
+    <div class="rem-body">
+      <div class="field">
+        <label for="remInterval">Напоминать каждые</label>
+        <select id="remInterval">
+          <option value="20">20 минут</option>
+          <option value="30">30 минут</option>
+          <option value="45">45 минут</option>
+          <option value="60">60 минут</option>
+        </select>
+      </div>
+      <div class="rem-status" role="status">
+        <span id="remNext"></span>
+        <span class="note" id="remCount"></span>
+      </div>
+    </div>
+    <label class="check" id="remPopupRow" hidden>
+      <input type="checkbox" id="remPopup">
+      <span>Сразу открывать перерыв вместо уведомления
+        <span class="note">Окно с отсчётом само появится поверх остальных. Удобно, если уведомления Windows выключены.</span>
+      </span>
+    </label>
+    <label class="check" id="remAutostartRow" hidden>
+      <input type="checkbox" id="remAutostart">
+      <span>Запускать вместе с Windows
+        <span class="note">Приложение стартует свёрнутым в трей (значок у часов) и напоминает о перерывах.</span>
+      </span>
+    </label>
+    <p class="cam-error" id="remError" role="alert" hidden></p>
+    <div class="rem-foot">
+      <span class="note" id="remHint"></span>
+      <button class="btn btn-reset btn-small" id="breakBtn" type="button">Перерыв сейчас</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle">Темп</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="speed">Скорость точки: <b id="speedVal">средняя</b></label>
+        <input type="range" id="speed" min="1" max="5" step="1" value="3">
+      </div>
+      <div class="field">
+        <label for="duration">Одно упражнение: <b id="durationVal">20 с</b></label>
+        <input type="range" id="duration" min="10" max="60" step="5" value="20">
+      </div>
+    </div>
+    <label class="check">
+      <input type="checkbox" id="fsToggle">
+      <span>Во весь экран во время упражнения
+        <span class="note" id="fsNote">Глаза двигаются шире, и трекер точнее видит, следите ли вы за точкой. Выход по клавише Esc.</span>
+      </span>
+    </label>
+  </section>
+
+  <section class="panel" aria-labelledby="camTitle">
+    <div class="toggle-row">
+      <div class="txt">
+        <h2 id="camTitle">Камера: контроль глаз и головы</h2>
+        <p class="note">Камера проверяет, следят ли глаза за точкой и неподвижна ли голова, и начисляет очки. <span id="camPrivacy">Распознавание лица встроено в приложение и работает без интернета. Видео обрабатывается только на этом устройстве и никуда не отправляется.</span></p>
+      </div>
+      <label class="switch" aria-label="Включить камеру">
+        <input type="checkbox" id="camToggle">
+        <span class="track"></span>
+      </label>
+    </div>
+    <p class="cam-status" id="camStatus" role="status" hidden></p>
+    <p class="cam-error" id="camError" role="alert" hidden></p>
+    <div class="cam-body" id="camBody" hidden>
+      <div class="cam-preview"><video id="camVideo" autoplay playsinline muted></video><canvas id="camMarks" width="240" height="180"></canvas></div>
+      <div class="field">
+        <label for="sensitivity">Чувствительность к движению головы: <b id="sensVal">7 из 10</b></label>
+        <input type="range" id="sensitivity" min="1" max="10" step="1" value="7">
+        <div class="meter" id="meter" aria-hidden="true"><i id="meterFill"></i><s></s></div>
+        <span class="note" id="meterCaption">Шкала оживёт во время упражнения: за чертой посередине голова считается сдвинутой.</span>
+      </div>
+    </div>
+    <div class="gaze-row" id="gazeRow" hidden>
+      <label class="check">
+        <input type="checkbox" id="cursorToggle" checked>
+        <span>Показывать, куда я смотрю
+          <span class="note" id="gazeStatus" role="status"></span>
+        </span>
+      </label>
+      <button class="btn btn-reset btn-small" id="calibBtn" type="button">Настроить взгляд</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="ratingTitle">
+    <h2 id="ratingTitle">Рейтинг</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="playerName">Имя игрока</label>
+        <input type="text" id="playerName" maxlength="24" autocomplete="nickname" placeholder="Например, Аня">
+      </div>
+      <div class="field">
+        <label for="ratingMode">Упражнение</label>
+        <select id="ratingMode"></select>
+      </div>
+    </div>
+    <div class="rating-table-wrap" id="ratingTableWrap" hidden>
+      <table class="rating-table">
+        <thead><tr><th>Место</th><th>Игрок</th><th>Очки</th><th>Взгляд</th><th>Голова</th><th>Дата</th></tr></thead>
+        <tbody id="ratingBody"></tbody>
+      </table>
+    </div>
+    <p class="rating-empty" id="ratingEmpty">Результатов пока нет. Впишите имя, включите камеру и выполните упражнение — очки появятся здесь.</p>
+    <p class="note">За каждое упражнение — до 100 очков: 60% за точность взгляда и 40% за неподвижность головы, умноженные на коэффициент скорости (от ×0,8 до ×1,3). Рейтинг хранится только на этом устройстве.</p>
+    <div class="rating-foot">
+      <span class="note" id="ratingCount"></span>
+      <button class="btn btn-reset btn-small" id="clearBtn" type="button">Очистить рейтинг</button>
+      <span class="confirm" id="clearConfirm" hidden>Удалить все результаты?
+        <button class="btn btn-danger btn-small" id="clearYes" type="button">Удалить</button>
+        <button class="btn btn-reset btn-small" id="clearNo" type="button">Отмена</button>
+      </span>
+    </div>
+  </section>
+
+  <p class="disclaimer">
+    Упражнения помогают размять и расслабить глазные мышцы при долгой работе за экраном. Это не лечение и не замена
+    консультации офтальмолога. Двигайте глазами плавно, без напряжения; при дискомфорте остановитесь.
+    Трекер оценивает взгляд по положению радужки на изображении с камеры, поэтому очки приблизительные: на точность
+    влияют свет, очки и качество камеры. Поставьте телефон или ноутбук неподвижно.
+  </p>
+</div>
+
+<script type="module">
+// Распознавание лица MediaPipe подгружается только когда включают камеру.
+// В приложении библиотека и модель лежат рядом со страницей (папка vendor, её собирает scripts/vendor.mjs),
+// поэтому интернет не нужен. Если папки нет (страницу открыли отдельно), берём их из сети.
+const VERSION = '0.10.14';
+const REMOTE_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const LOCAL = new URL('./vendor/', document.baseURI).href;
+const SOURCES = [
+  { module: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VERSION}`, wasm: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VERSION}/wasm` },
+  { module: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VERSION}/vision_bundle.mjs`, wasm: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VERSION}/wasm` },
+  { module: `https://unpkg.com/@mediapipe/tasks-vision@${VERSION}/vision_bundle.mjs`, wasm: `https://unpkg.com/@mediapipe/tasks-vision@${VERSION}/wasm` },
+];
+async function localVendor(){
+  try{
+    const r = await fetch(LOCAL + 'manifest.json', { cache: 'no-store' });
+    if (!r.ok) return null;
+    const m = await r.json();
+    return m && m.module && m.model ? m : null;
+  } catch (e){ return null; }
+}
+window.eyeGymLoadVision = async () => {
+  let lastError;
+  const local = await localVendor();
+  if (local){
+    try{
+      const mod = await import(LOCAL + local.module);
+      if (mod.FaceLandmarker && mod.FilesetResolver) return { mod, wasm: LOCAL + local.wasm, model: LOCAL + local.model, local: true };
+    } catch (e){ lastError = e; console.warn('Локальный MediaPipe не загрузился, пробую сеть', e); }
+  }
+  for (const src of SOURCES){
+    try{
+      const mod = await import(src.module);
+      if (mod.FaceLandmarker && mod.FilesetResolver) return { mod, wasm: src.wasm, model: REMOTE_MODEL, local: false };
+    } catch (e){ lastError = e; }
+  }
+  throw lastError || new Error('MediaPipe не загрузился');
+};
+</script>
+
+<script>
+// ---------- Упражнения ----------
+const TAU = Math.PI * 2;
+function squarePath(t){
+  const seg = t * 4, i = Math.min(3, Math.floor(seg)), f = seg - i;
+  const c = [[-1,-1],[1,-1],[1,1],[-1,1]];
+  const a = c[i], b = c[(i + 1) % 4];
+  return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f };
+}
+// Первая половина круга: центр → правый нижний угол → центр → левый верхний → центр.
+// Вторая половина: центр → правый верхний → центр → левый нижний → центр.
+function diagonalPath(t){
+  const half = t < 0.5;
+  const s = Math.sin(TAU * (half ? t * 2 : (t - 0.5) * 2));
+  return half ? { x: s, y: s } : { x: s, y: -s };
+}
+const EXERCISES = [
+  { key:'circle', label:'Круг', hint:'Ведите взгляд по кругу по часовой стрелке', hintBack:'Теперь по кругу против часовой стрелки', bothWays:true,
+    fn: t => ({ x: Math.cos(TAU * t), y: Math.sin(TAU * t) }) },
+  { key:'square', label:'Квадрат', hint:'Ведите взгляд по сторонам квадрата', hintBack:'Теперь по квадрату в обратную сторону', bothWays:true,
+    fn: squarePath },
+  { key:'horizontal', label:'Горизонталь', hint:'Переводите взгляд влево и вправо',
+    fn: t => ({ x: Math.sin(TAU * t), y: 0 }) },
+  { key:'vertical', label:'Вертикаль', hint:'Переводите взгляд вверх и вниз',
+    fn: t => ({ x: 0, y: Math.sin(TAU * t) }) },
+  { key:'diagonal', label:'Диагональ', hint:'Ведите взгляд по диагоналям из угла в угол',
+    fn: diagonalPath },
+  { key:'infinity', label:'Восьмёрка', hint:'Обводите взглядом лежащую восьмёрку',
+    fn: t => ({ x: Math.sin(TAU * t), y: 0.5 * Math.sin(2 * TAU * t) }) },
+];
+const MODES = [...EXERCISES.map(e => ({ key: e.key, label: e.label })), { key:'routine', label:'Полный комплекс' }];
+const modeLabel = key => (MODES.find(m => m.key === key) || {}).label || key;
+
+const LAP_SECONDS = { 1: 8, 2: 6.5, 3: 5, 4: 4, 5: 3 };
+const SPEED_NAMES = { 1: 'очень медленная', 2: 'медленная', 3: 'средняя', 4: 'быстрая', 5: 'очень быстрая' };
+const SPEED_FACTOR = { 1: 0.8, 2: 0.9, 3: 1, 4: 1.15, 5: 1.3 };
+const COUNTDOWN_MS = 3000, TRANSITION_MS = 3000, REST_MS = 10000, WARMUP_MS = 1000;
+
+// ---------- Элементы ----------
+const $ = id => document.getElementById(id);
+const canvas = $('canvas'), ctx = canvas.getContext('2d');
+const stage = $('stage'), stageTitle = $('stageTitle'), stageStep = $('stageStep'), stageHint = $('stageHint');
+const overlay = $('overlay'), ovStep = $('ovStep'), ovTitle = $('ovTitle'), ovCount = $('ovCount'), ovText = $('ovText');
+const summaryEl = $('summary'), progressBar = $('progressBar');
+const startBtn = $('startBtn'), resetBtn = $('resetBtn');
+const speedInput = $('speed'), speedVal = $('speedVal'), durationInput = $('duration'), durationVal = $('durationVal'), fsToggle = $('fsToggle');
+const camToggle = $('camToggle'), camBody = $('camBody'), camVideo = $('camVideo'), camMarks = $('camMarks'), camError = $('camError'), camStatus = $('camStatus');
+const sensitivityInput = $('sensitivity'), sensVal = $('sensVal');
+const meter = $('meter'), meterFill = $('meterFill'), meterCaption = $('meterCaption');
+const gazePill = $('gazePill'), gazePillText = $('gazePillText'), headPill = $('headPill'), headPillText = $('headPillText');
+const headAlert = $('headAlert');
+const gazeRow = $('gazeRow'), cursorToggle = $('cursorToggle'), gazeStatus = $('gazeStatus'), calibBtn = $('calibBtn');
+const playerName = $('playerName'), ratingMode = $('ratingMode'), ratingBody = $('ratingBody'), ratingTableWrap = $('ratingTableWrap');
+const ratingEmpty = $('ratingEmpty'), ratingCount = $('ratingCount'), clearBtn = $('clearBtn'), clearConfirm = $('clearConfirm');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const breaksPanel = $('breaksPanel'), remToggle = $('remToggle'), remInterval = $('remInterval'), remNext = $('remNext'), remCount = $('remCount');
+const remPopup = $('remPopup'), remPopupRow = $('remPopupRow'), remAutostart = $('remAutostart'), remAutostartRow = $('remAutostartRow');
+const remError = $('remError'), remHint = $('remHint'), breakBtn = $('breakBtn'), ovActions = $('ovActions'), stageClose = $('stageClose'), fsNote = $('fsNote');
+
+// ---------- Приложение (Windows / Android) ----------
+// На Windows мост к программе даёт preload.js (window.eyeGymDesktop), на Android — Capacitor.
+// В обычном браузере APP = null, и страница работает как раньше.
+const APP = window.eyeGymDesktop || androidBridge() || null;
+const USE_PSEUDO_FS = !!APP && APP.platform === 'android';   // в WebView Android настоящего полного экрана нет — растягиваем сцену сами
+
+// ---------- Состояние ----------
+// Фазы: idle → countdown → exercise → (transition → exercise)* → rest → done.
+// Время каждой фазы отсчитывается от момента входа в неё.
+const S = {
+  phase: 'idle', mode: 'circle', queue: [], idx: 0,
+  phaseStart: 0, phaseEnd: 0, lastTs: 0, raf: 0, pausedAt: null,
+  lap: 0, dir: 1, dot: { x: 0, y: 0 }, trail: [], cur: null, results: [], wakeLock: null, lastSaved: null,
+};
+const isRunning = () => S.phase !== 'idle' && S.phase !== 'done';
+const lapSeconds = (speed = speedInput.value) => LAP_SECONDS[speed] || 5;
+const durationMs = () => parseFloat(durationInput.value) * 1000;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// ---------- Рисование ----------
+let W = 0, H = 0;
+const isFullscreen = () => (document.fullscreenElement || document.webkitFullscreenElement) === stage || stage.classList.contains('pseudo-fs');
+function resizeCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  W = stage.clientWidth; H = stage.clientHeight;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function token(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// Координаты точки — от −1 до 1 по каждой оси; здесь они переводятся в пиксели сцены.
+function radii(){
+  const fs = isFullscreen();
+  return { fs, cx: W / 2, cy: H / 2,
+    rx: fs ? W * 0.44 : Math.min(W, H) * 0.33, ry: fs ? H * 0.38 : Math.min(W, H) * 0.33 };
+}
+function drawScene(ex, t, withTrail){
+  const { fs, cx, cy, rx, ry } = radii();
+  ctx.clearRect(0, 0, W, H);
+  if (!ex){ drawGazeCursor(); return; }
+  const dotColor = token('--dot'), ringColor = token('--dot-ring'), pathColor = token('--path'), bg = token('--bg');
+  ctx.save();
+  ctx.strokeStyle = pathColor; ctx.lineWidth = 2; ctx.setLineDash([4, 7]);
+  ctx.beginPath();
+  for (let i = 0; i <= 200; i++){
+    const p = ex.fn(i / 200), x = cx + p.x * rx, y = cy + p.y * ry;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.stroke(); ctx.restore();
+
+  const p = ex.fn(t), px = cx + p.x * rx, py = cy + p.y * ry;
+  if (withTrail){
+    S.trail.push({ x: px, y: py });
+    if (S.trail.length > 14) S.trail.shift();
+    ctx.save(); ctx.fillStyle = dotColor;
+    S.trail.forEach((q, i) => {
+      const a = (i + 1) / S.trail.length;
+      ctx.globalAlpha = 0.12 * a;
+      ctx.beginPath(); ctx.arc(q.x, q.y, 5 + 6 * a, 0, TAU); ctx.fill();
+    });
+    ctx.restore();
+  }
+  const r = fs ? 14 : 11;
+  ctx.beginPath(); ctx.arc(px, py, r, 0, TAU); ctx.fillStyle = dotColor; ctx.fill();
+  ctx.beginPath(); ctx.arc(px, py, r + 7, 0, TAU); ctx.strokeStyle = ringColor; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px, py, 3, 0, TAU); ctx.fillStyle = bg; ctx.fill();
+  drawGazeCursor();
+}
+// Бирюзовый кружок — куда, по оценке камеры, сейчас смотрит человек (после калибровки).
+function drawGazeCursor(){
+  if (!gazeCursorVisible()) return;
+  const { fs, cx, cy, rx, ry } = radii();
+  const x = clamp(cx + GAZE.point.x * rx, 10, W - 10), y = clamp(cy + GAZE.point.y * ry, 10, H - 10);
+  const r = fs ? 18 : 14, color = token('--accent');
+  const halo = clamp(GAZE.calib.err / 100 * W, r + 6, fs ? 90 : 60);   // ореол — примерная погрешность: взгляд где-то здесь
+  ctx.save();
+  const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, halo);
+  grad.addColorStop(0, color); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = 0.22; ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(x, y, halo, 0, TAU); ctx.fill();
+  ctx.globalAlpha = 0.95; ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, 3, 0, TAU); ctx.fillStyle = color; ctx.fill();
+  ctx.restore();
+}
+function previewExercise(){ return S.mode === 'routine' ? EXERCISES[0] : EXERCISES.find(e => e.key === S.mode); }
+function drawIdle(){ resizeCanvas(); drawScene(previewExercise(), 0, false); }
+
+// ---------- Фазы ----------
+function stepText(){ return S.queue.length > 1 ? `Упражнение ${S.idx + 1} из ${S.queue.length}` : ''; }
+function showOverlay({ step = '', title = '', count = '', text = '' }){
+  ovStep.textContent = step; ovStep.hidden = !step;
+  ovTitle.textContent = title; ovTitle.hidden = !title;
+  ovCount.textContent = count; ovCount.hidden = count === '';
+  ovText.textContent = text; ovText.hidden = !text;
+  ovActions.hidden = true; ovActions.replaceChildren();
+  overlay.hidden = false; overlay.scrollTop = 0; stage.classList.add('covered');
+}
+function hideOverlay(){ overlay.hidden = true; ovActions.hidden = true; stage.classList.remove('covered'); }
+function showOverlayActions(list){
+  ovActions.replaceChildren(...list.map(a => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ' + a.cls; b.textContent = a.label;
+    b.addEventListener('click', a.run);
+    return b;
+  }));
+  ovActions.hidden = !list.length;
+}
+function setStageText(title, step, hint){ stageTitle.textContent = title; stageStep.textContent = step; stageHint.textContent = hint; }
+
+function enterPhase(phase, ms){
+  const now = performance.now();
+  S.phase = phase; S.phaseStart = now; S.phaseEnd = ms ? now + ms : Infinity; S.lastTs = now;
+  const ex = S.queue[S.idx];
+  if (phase === 'countdown' || phase === 'transition'){
+    resetTracking();
+    progressBar.style.width = '0%';
+    S.dot = ex.fn(0);
+    drawScene(ex, 0, false);
+    setStageText(ex.label, stepText(), ex.hint);
+    showOverlay({ step: stepText(), title: ex.label, count: String(Math.ceil(ms / 1000)), text: ex.hint });
+  } else if (phase === 'exercise'){
+    finalizeBaselines();
+    S.lap = 0; S.dir = 1; S.trail = []; S.dot = ex.fn(0);
+    S.cur = { key: ex.key, label: ex.label, start: now, speed: +speedInput.value, stillMs: 0, trackedMs: 0, warnings: 0, samples: [] };
+    hideOverlay();
+    setStageText(ex.label, stepText(), ex.hint);
+  } else if (phase === 'rest'){
+    resetTracking();
+    progressBar.style.width = '100%';
+    ctx.clearRect(0, 0, W, H);
+    setStageText('Отдых', '', 'Закройте глаза');
+    showOverlay({ title: 'Закройте глаза и расслабьтесь', count: String(REST_MS / 1000), text: 'Дайте глазам отдохнуть. Можно слегка поморгать.' });
+  } else if (phase === 'farlook'){
+    resetTracking();
+    progressBar.style.width = '0%';
+    ctx.clearRect(0, 0, W, H);
+    setStageText('Перерыв 20-20-20', '', 'Смотрите вдаль');
+    showOverlay({ step: 'Перерыв 20-20-20', title: 'Посмотрите вдаль', count: String(Math.ceil(ms / 1000)),
+      text: 'Найдите предмет в 6 метрах или дальше — за окном или в другом конце комнаты — и смотрите на него, пока не прозвучит сигнал. Моргайте спокойно.' });
+  }
+}
+
+function start(){
+  if (isRunning()) return;
+  S.queue = S.mode === 'routine' ? EXERCISES.slice() : [EXERCISES.find(e => e.key === S.mode)];
+  S.idx = 0; S.results = []; S.lastSaved = null;
+  summaryEl.hidden = true;
+  if (fsToggle.checked) enterFullscreen();
+  resizeCanvas();
+  startBtn.disabled = true; startBtn.textContent = 'Идёт…';
+  requestWakeLock();
+  if (!fsToggle.checked) stage.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+  if (needsCalibration()) startCalibration(true);   // курсор взгляда включён, а настройки для этого режима ещё нет
+  else enterPhase('countdown', COUNTDOWN_MS);
+  cancelAnimationFrame(S.raf);
+  S.raf = requestAnimationFrame(frame);
+  appBusy(true);
+}
+
+function reset(){
+  if (S.phase === 'farlook' && APP && APP.cancelBreakTimer) APP.cancelBreakTimer();
+  appBusy(false); clearTimeout(S.breakTimeout);
+  cancelAnimationFrame(S.raf); S.raf = 0;
+  S.phase = 'idle'; S.pausedAt = null; S.queue = []; S.trail = []; S.cur = null; S.calibRun = null;
+  clearTimeout(GAZE.resultTimer);
+  resetTracking(); releaseWakeLock(); exitFullscreen();
+  hideOverlay(); summaryEl.hidden = true;
+  progressBar.style.width = '0%';
+  startBtn.disabled = false; startBtn.textContent = 'Начать'; calibBtn.disabled = false;
+  const ex = previewExercise();
+  setStageText(S.mode === 'routine' ? 'Полный комплекс' : ex.label, S.mode === 'routine' ? `${EXERCISES.length} упражнений подряд` : '', 'Нажмите «Начать»');
+  drawIdle();
+}
+
+function frame(now){
+  S.raf = 0;
+  if (!isRunning() || S.pausedAt !== null) return;
+  const dt = Math.min(100, Math.max(0, now - S.lastTs));
+  S.lastTs = now;
+  if (S.phase === 'exercise') stepExercise(now, dt);
+  else if (S.phase === 'calib') calibStep(now);
+  else {
+    const left = Math.max(0, Math.ceil((S.phaseEnd - now) / 1000));
+    if (ovCount.textContent !== String(left)) ovCount.textContent = String(left);
+    if (S.phase === 'farlook') progressBar.style.width = (clamp((now - S.phaseStart) / (S.phaseEnd - S.phaseStart), 0, 1) * 100).toFixed(1) + '%';
+    if (now >= S.phaseEnd) endTimedPhase();
+  }
+  if (isRunning()) S.raf = requestAnimationFrame(frame);
+}
+function endTimedPhase(){
+  if (S.phase === 'countdown' || S.phase === 'transition') enterPhase('exercise');
+  else if (S.phase === 'rest') finishAll();
+  else if (S.phase === 'farlook') finishBreak();
+}
+function stepExercise(now, dt){
+  const ex = S.queue[S.idx];
+  const total = durationMs(), elapsed = now - S.phaseStart;
+  const dir = ex.bothWays && elapsed > total / 2 ? -1 : 1;
+  if (dir !== S.dir){ S.dir = dir; stageHint.textContent = ex.hintBack; }
+  S.lap = (((S.lap + dir * dt / 1000 / lapSeconds()) % 1) + 1) % 1;
+  S.dot = ex.fn(S.lap);
+  drawScene(ex, S.lap, true);
+  progressBar.style.width = Math.min(100, elapsed / total * 100) + '%';
+  if (CAM.on && CAM.mode !== 'face') diffStep(now, dt);   // запасной контроль головы без модели
+  if (elapsed >= total) endExercise();
+}
+
+function endExercise(){
+  const c = S.cur;
+  if (c && c.trackedMs > 0){
+    c.head = Math.round(100 * c.stillMs / c.trackedMs);
+    const samples = c.samples.filter(p => p.t >= c.start + WARMUP_MS);
+    if (samples.length >= 30){
+      const g = analyzeGaze(samples, lapSeconds(c.speed));
+      c.gaze = g.score; c.r = g.r; c.lagMs = g.lagMs; c.coverage = g.coverage; c.headShare = g.headShare;
+      c.points = exercisePoints(c.gaze, c.head, c.speed);
+    }
+    c.samples = null;
+    S.results.push(c);
+  }
+  S.cur = null;
+  S.idx++;
+  if (S.idx < S.queue.length) enterPhase('transition', TRANSITION_MS);
+  else enterPhase('rest', REST_MS);
+}
+
+function finishAll(){
+  cancelAnimationFrame(S.raf); S.raf = 0;
+  S.phase = 'done';
+  resetTracking(); releaseWakeLock(); exitFullscreen();
+  startBtn.disabled = false; startBtn.textContent = 'Повторить';
+  setStageText('Готово', '', '');
+  const scored = S.results.length === S.queue.length && S.results.every(r => r.points != null);
+  const saved = scored ? saveScore(S.results) : null;
+  S.lastSaved = saved;
+  showOverlay({ title: 'Готово', text: S.results.length ? '' : 'Гимнастика выполнена. Чтобы получать очки, включите камеру в настройках ниже.' });
+  renderSummary(saved);
+  if (saved){ ratingMode.value = saved.mode; }
+  renderRating(saved ? saved.id : null);
+  appBusy(false);
+  appBreakDone();   // гимнастика тоже даёт глазам отдых — таймер напоминаний начинается заново
+}
+
+function renderSummary(saved){
+  summaryEl.replaceChildren();
+  if (!S.results.length){ summaryEl.hidden = true; return; }
+  const hasPoints = S.results.some(r => r.points != null);
+  const table = document.createElement('table');
+  const head = hasPoints ? ['Упражнение', 'Взгляд', 'Голова', 'Очки'] : ['Упражнение', 'Голова неподвижна'];
+  table.innerHTML = '<thead><tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+  const tbody = document.createElement('tbody');
+  const addRow = (cells, cls) => {
+    const tr = document.createElement('tr'); if (cls) tr.className = cls;
+    cells.forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    tbody.appendChild(tr);
+  };
+  S.results.forEach(r => addRow(hasPoints
+    ? [r.label, r.gaze != null ? r.gaze + '%' : '—', r.head + '%', r.points != null ? String(r.points) : '—']
+    : [r.label, r.head + '%']));
+  const avgHead = Math.round(S.results.reduce((s, r) => s + r.head, 0) / S.results.length);
+  const total = S.results.reduce((s, r) => s + (r.points || 0), 0);
+  if (S.results.length > 1){
+    const avgGaze = Math.round(S.results.reduce((s, r) => s + (r.gaze || 0), 0) / S.results.length);
+    addRow(hasPoints ? ['Итого', avgGaze + '%', avgHead + '%', String(total)] : ['Итого', avgHead + '%'], 'total');
+  }
+  table.appendChild(tbody);
+  summaryEl.appendChild(table);
+
+  const para = (text, cls) => { const p = document.createElement('p'); if (cls) p.className = cls; p.textContent = text; summaryEl.appendChild(p); };
+  if (hasPoints){
+    para(`${total} ${plural(total, 'очко', 'очка', 'очков')}`, 'sum-points');
+    if (saved){
+      para(`${saved.name}: место ${saved.rank} из ${saved.of} в рейтинге «${modeLabel(saved.mode)}».`);
+      if (saved.personalBest) para(saved.previousBest == null ? 'Первый результат в рейтинге!' : `Новый личный рекорд! Было ${saved.previousBest}.`, 'sum-record');
+      if (!saved.persisted) para('Браузер не дал сохранить результат на этом устройстве, поэтому он пропадёт после закрытия страницы.');
+    } else {
+      para('Результат не попал в рейтинг: камера не видела глаза в одном из упражнений.');
+    }
+  }
+  const warnings = S.results.reduce((s, r) => s + r.warnings, 0);
+  para(verdict(hasPoints) + (warnings ? ` Предупреждений о движении головы: ${warnings}.` : ''));
+  const byHead = S.results.filter(r => r.headShare >= 0.5).map(r => `«${r.label}»`);
+  if (byHead.length) para(`В ${byHead.length > 1 ? 'упражнениях' : 'упражнении'} ${byHead.join(', ')} за точкой поворачивалась голова, а не глаза, поэтому взгляд не засчитан.`);
+  summaryEl.hidden = false;
+}
+function verdict(hasPoints){
+  if (!hasPoints){
+    const avg = S.results.reduce((s, r) => s + r.head, 0) / S.results.length;
+    if (avg >= 90) return 'Отлично: голова почти не двигалась.';
+    if (avg >= 70) return 'Хорошо, но голова иногда смещалась.';
+    return 'Голова часто двигалась. Сядьте ровнее и повторите медленнее.';
+  }
+  const q = S.results.reduce((s, r) => s + 0.6 * (r.gaze || 0) + 0.4 * r.head, 0) / S.results.length;
+  if (q >= 85) return 'Отлично: глаза точно следовали за точкой, голова не двигалась.';
+  if (q >= 65) return 'Хорошо. Ведите взгляд плавнее и держите голову неподвижно.';
+  if (q >= 40) return 'Неплохо для начала. Попробуйте скорость пониже и режим во весь экран.';
+  return 'Глаза почти не следовали за точкой. Сядьте напротив камеры и смотрите прямо на точку.';
+}
+function plural(n, one, few, many){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+// ---------- Анализ взгляда (чистые функции) ----------
+// Точки лица MediaPipe Face Landmarker (478 точек, последние 10 — радужки).
+// Для взгляда — уголки глаз, веки и центры радужек; для головы — только точки вне глаз.
+const LM = { rOuter:33, rInner:133, rTop:159, rBottom:145, lInner:362, lOuter:263, lTop:386, lBottom:374, iris1:468, iris2:473,
+  nose:1, bridge:6, cheekR:50, cheekL:280, edgeR:234, edgeL:454 };
+
+// Положение радужки внутри глаза: gx — вдоль линии уголков (доля ширины глаза), gy — поперёк, вниз со знаком плюс.
+function eyeFeatures(lm, vw, vh){
+  const P = i => ({ x: lm[i].x * vw, y: lm[i].y * vh });
+  const eye = (c1, c2, top, bot, iris) => {
+    const dx = c2.x - c1.x, dy = c2.y - c1.y, w2 = dx * dx + dy * dy || 1, w = Math.sqrt(w2);
+    const mx = (c1.x + c2.x) / 2, my = (c1.y + c2.y) / 2;
+    return {
+      u: ((iris.x - c1.x) * dx + (iris.y - c1.y) * dy) / w2,
+      v: ((iris.x - mx) * -dy + (iris.y - my) * dx) / w2,
+      ear: Math.hypot(bot.x - top.x, bot.y - top.y) / w,
+    };
+  };
+  const rc1 = P(LM.rOuter), rc2 = P(LM.rInner), lc1 = P(LM.lInner), lc2 = P(LM.lOuter);
+  // Центр радужки — среднее её 5 точек (центр и 4 на контуре): так меньше дрожание.
+  const irisAt = base => { let x = 0, y = 0; for (let k = 0; k < 5; k++){ const p = P(base + k); x += p.x; y += p.y; } return { x: x / 5, y: y / 5 }; };
+  let ia = irisAt(LM.iris1), ib = irisAt(LM.iris2);
+  const rMid = { x: (rc1.x + rc2.x) / 2, y: (rc1.y + rc2.y) / 2 };
+  if (Math.hypot(ia.x - rMid.x, ia.y - rMid.y) > Math.hypot(ib.x - rMid.x, ib.y - rMid.y)) [ia, ib] = [ib, ia]; // радужки к своим глазам
+  const r = eye(rc1, rc2, P(LM.rTop), P(LM.rBottom), ia);
+  const l = eye(lc1, lc2, P(LM.lTop), P(LM.lBottom), ib);
+  return { gx: (r.u + l.u) / 2 - 0.5, gy: (r.v + l.v) / 2, ear: (r.ear + l.ear) / 2 };
+}
+// Положение головы — только по точкам вне глаз: кончик и спинка носа, скулы, края лица.
+// Поэтому движения глаз и моргание на контроль головы не влияют.
+function headFeatures(lm, vw, vh){
+  const P = i => ({ x: lm[i].x * vw, y: lm[i].y * vh });
+  const n = P(LM.nose), br = P(LM.bridge), cr = P(LM.cheekR), cl = P(LM.cheekL), er = P(LM.edgeR), el = P(LM.edgeL);
+  const w = Math.hypot(el.x - er.x, el.y - er.y) || 1;
+  const mx = (er.x + el.x) / 2, my = (er.y + el.y) / 2;
+  return {
+    cx: (n.x + br.x + cr.x + cl.x) / 4, cy: (n.y + br.y + cr.y + cl.y) / 4, w,
+    yaw: (n.x - mx) / w,      // нос выступает вперёд краёв лица: при повороте головы он смещается относительно них
+    pitch: (n.y - my) / w,    // то же при кивке — по вертикали
+    roll: Math.atan2(el.y - er.y, el.x - er.x) * 180 / Math.PI,
+  };
+}
+const HEAD_KEYS = ['trans', 'scale', 'yaw', 'pitch', 'roll'];
+function headDelta(f, b){
+  return {
+    trans: Math.hypot(f.cx - b.cx, f.cy - b.cy) / b.w,   // сдвиг в долях ширины лица
+    scale: Math.abs(f.w / b.w - 1),                       // приближение к экрану или отклонение назад
+    yaw: Math.abs(f.yaw - b.yaw), pitch: Math.abs(f.pitch - b.pitch), roll: Math.abs(f.roll - b.roll),
+  };
+}
+// Опорное положение — среднее за последнюю секунду отсчёта. Заодно меряем дрожание точек этой камеры.
+function headBaseline(list){
+  const n = list.length, avg = k => list.reduce((s, f) => s + f[k], 0) / n;
+  const b = { cx: avg('cx'), cy: avg('cy'), w: avg('w'), yaw: avg('yaw'), pitch: avg('pitch'), roll: avg('roll'), jitter: {} };
+  if (n >= 10){
+    const ds = list.map(f => headDelta(f, b));
+    for (const k of HEAD_KEYS) b.jitter[k] = Math.sqrt(ds.reduce((s, d) => s + d[k] * d[k], 0) / n);
+  }
+  return b;
+}
+// Пороги при чувствительности 7 откалиброваны на 3D-модели головы в 55 см от камеры:
+// поворот ≈5°, кивок ≈5°, наклон к плечу 4°, сдвиг ≈1 см, приближение ≈4 см.
+const HEAD_LIMITS = { trans: 0.075, scale: 0.06, yaw: 0.06, pitch: 0.055, roll: 4 };
+function headLevel(f, b, sens){
+  const k = 2 - (sens - 1) * 1.5 / 9;   // чувствительность 10 → пороги ×0,5, 7 → ×1, 1 → ×2
+  const d = headDelta(f, b);
+  let level = 0;
+  for (const key of HEAD_KEYS){
+    // Шумная камера поднимает порог (до 4 стандартных отклонений дрожания), но не выше двойного обычного.
+    const limit = Math.max(HEAD_LIMITS[key] * k, Math.min(4 * (b.jitter[key] || 0), HEAD_LIMITS[key] * 2));
+    level = Math.max(level, d[key] / limit);
+  }
+  return level;
+}
+// Убираем медленный дрейф (сползание позы, наклон камеры): вычитаем скользящее среднее за один круг точки.
+function highPass(arr, win){
+  const n = arr.length, out = new Float64Array(n), half = Math.floor(win / 2), pre = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) pre[i + 1] = pre[i] + arr[i];
+  for (let i = 0; i < n; i++){
+    const a = Math.max(0, i - half), b = Math.min(n, i + half + 1);
+    out[i] = arr[i] - (pre[b] - pre[a]) / (b - a);
+  }
+  return out;
+}
+function laggedCorr(g, d, k, valid){
+  let n = 0, sg = 0, sd = 0, sgg = 0, sdd = 0, sgd = 0;
+  for (let i = k; i < g.length; i++){
+    if (!valid[i]) continue;
+    const a = g[i], b = d[i - k];
+    n++; sg += a; sd += b; sgg += a * a; sdd += b * b; sgd += a * b;
+  }
+  if (n < 10) return 0;
+  const cov = sgd - sg * sd / n, vg = sgg - sg * sg / n, vd = sdd - sd * sd / n;
+  return vg > 1e-12 && vd > 1e-12 ? cov / Math.sqrt(vg * vd) : 0;
+}
+// Радужка выступает над уголками глаз примерно на сантиметр, поэтому при повороте ГОЛОВЫ она на картинке тоже
+// смещается относительно уголков (перспектива). Сколько gx/gy даёт единица yaw/pitch головы — замерено на 3D-модели.
+const HEAD_PARALLAX = { x: 0.61, y: 0.63 };
+// Насколько движение глаз (без вклада поворотов головы) повторяет движение точки: корреляция по каждой оси
+// с учётом запаздывания глаз до 0,6 с. Знак не важен: камера может зеркалить картинку.
+function analyzeGaze(samples, lapSec){
+  const n = samples.length;
+  if (n < 30) return { r: 0, lagMs: 0, coverage: 0, score: 0, headShare: 0 };
+  const fs = (n - 1) / Math.max(0.001, (samples[n - 1].t - samples[0].t) / 1000);
+  const valid = samples.map(s => s.valid);
+  const coverage = valid.filter(Boolean).length / n;
+  const fill = key => {
+    const out = new Float64Array(n); let last = null;
+    for (let i = 0; i < n; i++) if (valid[i]) { last = samples[i][key] || 0; break; }
+    for (let i = 0; i < n; i++){ if (valid[i]) last = samples[i][key] || 0; out[i] = last == null ? 0 : last; }
+    return out;
+  };
+  const win = Math.max(3, Math.round(lapSec * fs));
+  const HY = highPass(fill('hyaw'), win), HP = highPass(fill('hpitch'), win);
+  // Вычитаем из движения радужки ту часть, которую объясняет поворот головы: остаётся движение самих глаз.
+  const GX = highPass(fill('gx'), win).map((v, i) => v - HEAD_PARALLAX.x * HY[i]);
+  const GY = highPass(fill('gy'), win).map((v, i) => v - HEAD_PARALLAX.y * HP[i]);
+  const DX = highPass(Float64Array.from(samples, s => s.dx), win), DY = highPass(Float64Array.from(samples, s => s.dy), win);
+  const variance = a => { let m = 0; for (const v of a) m += v; m /= a.length; let s = 0; for (const v of a) s += (v - m) ** 2; return s / a.length; };
+  const vx = variance(DX), vy = variance(DY), wsum = vx + vy;
+  if (wsum < 1e-9) return { r: 0, lagMs: 0, coverage, score: 0, headShare: 0 };
+  // Какая доля видимого движения радужки пришлась на поворот головы. Компенсация приблизительна (лица разные),
+  // поэтому если голова дала больше половины движения, взгляд не засчитываем, даже если остаток похож на точку.
+  const share = (eye, head) => { const e = Math.sqrt(variance(eye)), h = Math.sqrt(variance(head)); return h / (e + h + 1e-12); };
+  const headShare = (vx * share(GX, HY.map(v => HEAD_PARALLAX.x * v)) + vy * share(GY, HP.map(v => HEAD_PARALLAX.y * v))) / wsum;
+  const headFactor = clamp((0.6 - headShare) / 0.4, 0, 1);   // доля головы ≤ 0,2 — без штрафа, ≥ 0,6 — взгляд не засчитан
+  let best = { r: 0, k: 0 };
+  const maxLag = Math.max(1, Math.round(0.6 * fs));
+  for (let k = 0; k <= maxLag; k++){
+    const rx = vx > 1e-9 ? Math.abs(laggedCorr(GX, DX, k, valid)) : 0;
+    const ry = vy > 1e-9 ? Math.abs(laggedCorr(GY, DY, k, valid)) : 0;
+    const r = (vx * rx + vy * ry) / wsum;
+    if (r > best.r) best = { r, k };
+  }
+  const accuracy = clamp((best.r - 0.2) / 0.65, 0, 1);       // r ≤ 0,2 — не следит, r ≥ 0,85 — следит точно
+  const score = Math.round(100 * accuracy * Math.min(1, coverage / 0.8) * headFactor);
+  return { r: best.r, lagMs: Math.round(best.k / fs * 1000), coverage, score, headShare };
+}
+function exercisePoints(gaze, head, speed){ return Math.round((0.6 * gaze + 0.4 * head) * (SPEED_FACTOR[speed] || 1)); }
+
+// ---------- Куда смотрит человек: калибровка и курсор взгляда ----------
+// Калибровка — 9 точек там же, где ходит упражнение: центр, углы и середины сторон. На каждой точке 1,7 с,
+// первые 0,7 с не учитываем — глаза в это время перескакивают на точку.
+const CAL_POINTS = [[0, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+const CAL_INTRO_MS = 3000, CAL_HOLD_MS = 1700, CAL_SKIP_MS = 700;
+
+// Сглаживание «1€» (Casiez и др., 2012): когда взгляд стоит, дрожание гасится сильно, когда быстро движется — слабо,
+// чтобы кружок не отставал.
+class OneEuro {
+  constructor(minCutoff, beta, dCutoff = 1){ this.minCutoff = minCutoff; this.beta = beta; this.dCutoff = dCutoff; this.x = null; this.dx = 0; this.t = 0; }
+  static alpha(cutoff, dt){ const tau = 1 / (TAU * cutoff); return 1 / (1 + tau / dt); }
+  filter(x, t){
+    if (this.x === null){ this.x = x; this.t = t; return x; }
+    const dt = Math.max(0.001, (t - this.t) / 1000); this.t = t;
+    const ad = OneEuro.alpha(this.dCutoff, dt); this.dx = ad * ((x - this.x) / dt) + (1 - ad) * this.dx;
+    const a = OneEuro.alpha(this.minCutoff + this.beta * Math.abs(this.dx), dt);
+    return (this.x = a * x + (1 - a) * this.x);
+  }
+}
+const GAZE = { calib: null, point: null, pointT: 0, fx: null, fy: null, drift: false, resultTimer: 0, failNote: '' };
+const geometryNow = () => isFullscreen() ? 'fs' : 'page';
+const cursorWanted = () => cursorToggle.checked && CAM.on && CAM.mode === 'face';
+function needsCalibration(){ return cursorWanted() && !(GAZE.calib && GAZE.calib.mode === (fsToggle.checked ? 'fs' : 'page')); }
+function gazeCursorVisible(){
+  return cursorWanted() && !!GAZE.calib && GAZE.calib.mode === geometryNow() && !!GAZE.point && !GAZE.drift
+    && performance.now() - GAZE.pointT < 400 && (S.phase === 'exercise' || S.phase === 'idle');
+}
+
+// Линейная модель: положение радужки (и раскрытие век — они опускаются, когда смотришь вниз) → координаты на сцене.
+// Признаки стандартизуем, небольшая регуляризация не даёт модели «разлететься» на 9 точках.
+function solveRidge(rows, targets, lambda){
+  const k = rows[0].length, M = Array.from({ length: k }, () => new Float64Array(k + 1));
+  rows.forEach((r, n) => { for (let i = 0; i < k; i++){ for (let j = 0; j < k; j++) M[i][j] += r[i] * r[j]; M[i][k] += r[i] * targets[n]; } });
+  for (let i = 1; i < k; i++) M[i][i] += lambda;
+  for (let c = 0; c < k; c++){
+    let p = c; for (let r = c + 1; r < k; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    if (Math.abs(M[c][c]) < 1e-12) return null;
+    for (let r = 0; r < k; r++){ if (r === c) continue; const m = M[r][c] / M[c][c]; for (let j = c; j <= k; j++) M[r][j] -= m * M[c][j]; }
+  }
+  return M.map((row, i) => row[k] / row[i]);
+}
+function fitGazeModel(points){
+  const fit = (keys, target) => {
+    const mu = keys.map(k => points.reduce((s, p) => s + p.f[k], 0) / points.length);
+    const sd = keys.map((k, j) => Math.sqrt(points.reduce((s, p) => s + (p.f[k] - mu[j]) ** 2, 0) / points.length) || 1);
+    const row = f => [1, ...keys.map((k, j) => (f[k] - mu[j]) / sd[j])];
+    const beta = solveRidge(points.map(p => row(p.f)), points.map(target), 0.05);
+    return beta && { predict: f => row(f).reduce((s, v, i) => s + v * beta[i], 0) };
+  };
+  const mx = fit(['gx', 'gy'], p => p.x), my = fit(['gx', 'gy', 'ear'], p => p.y);
+  return mx && my ? { mx, my } : null;
+}
+// Честная оценка точности: каждую точку предсказываем моделью, обученной на остальных восьми.
+function looErrorPct(points){
+  const { rx, ry } = radii(); let sum = 0, n = 0;
+  points.forEach((p, i) => {
+    const m = fitGazeModel(points.filter((_, j) => j !== i)); if (!m) return;
+    sum += Math.hypot((m.mx.predict(p.f) - p.x) * rx, (m.my.predict(p.f) - p.y) * ry); n++;
+  });
+  return n ? sum / n / W * 100 : Infinity;
+}
+// Насколько «дрожит» оценка, пока человек смотрит в одну точку калибровки (в процентах ширины поля).
+function calibrationJitterPct(model, data){
+  const { rx, ry } = radii(), sd = a => { const m = a.reduce((s, v) => s + v, 0) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+  const per = data.filter(list => list.length >= 6).map(list => {
+    const ears = list.map(f => f.ear).sort((a, b) => a - b), med = ears[Math.floor(ears.length / 2)];
+    const open = list.filter(f => f.ear >= med * 0.75);
+    return Math.hypot(sd(open.map(f => model.mx.predict(f))) * rx, sd(open.map(f => model.my.predict(f))) * ry) / W * 100;
+  }).sort((a, b) => a - b);
+  return per.length ? per[Math.floor(per.length / 2)] : 10;
+}
+// Медиана по точке без морганий — устойчива к случайным выбросам.
+function robustPoint(list){
+  if (list.length < 6) return null;
+  const med = a => { const s = a.slice().sort((p, q) => p - q); return s[Math.floor(s.length / 2)]; };
+  const earMed = med(list.map(f => f.ear));
+  const open = list.filter(f => f.ear >= earMed * 0.75);
+  if (open.length < 5) return null;
+  return { gx: med(open.map(f => f.gx)), gy: med(open.map(f => f.gy)), ear: med(open.map(f => f.ear)) };
+}
+
+function startCalibration(thenExercise){
+  const now = performance.now();
+  if (!thenExercise){                     // отдельный запуск кнопкой «Настроить взгляд»
+    if (isRunning() || CAM.mode !== 'face') return;
+    S.queue = []; summaryEl.hidden = true;
+    if (fsToggle.checked) enterFullscreen();
+    resizeCanvas();
+    startBtn.disabled = true; startBtn.textContent = 'Идёт настройка…';
+    requestWakeLock();
+    if (!fsToggle.checked) stage.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+  clearTimeout(GAZE.resultTimer);
+  calibBtn.disabled = true;
+  S.calibRun = { then: thenExercise, idx: -1, pointStart: 0, capture: false, data: CAL_POINTS.map(() => []), head: [] };
+  S.phase = 'calib'; S.phaseStart = now; S.phaseEnd = now + CAL_INTRO_MS; S.lastTs = now;
+  resetTracking();
+  ctx.clearRect(0, 0, W, H); progressBar.style.width = '0%';
+  setStageText('Настройка взгляда', '', '');
+  showOverlay({ title: 'Настройка взгляда', count: String(CAL_INTRO_MS / 1000),
+    text: 'По очереди появятся 9 точек. Смотрите на каждую, пока кольцо вокруг неё не сожмётся. Голову держите неподвижно, камеру не двигайте.' });
+  if (!thenExercise){ cancelAnimationFrame(S.raf); S.raf = requestAnimationFrame(frame); }
+}
+function calibStep(now){
+  const R = S.calibRun; if (!R) return;
+  if (R.idx === -1){
+    const left = Math.max(0, Math.ceil((S.phaseEnd - now) / 1000));
+    if (ovCount.textContent !== String(left)) ovCount.textContent = String(left);
+    if (now < S.phaseEnd) return;
+    hideOverlay(); resizeCanvas(); R.idx = 0; R.pointStart = now;
+  }
+  const elapsed = now - R.pointStart;
+  const [x, y] = CAL_POINTS[R.idx];
+  S.dot = { x, y };
+  R.capture = elapsed >= CAL_SKIP_MS;
+  drawCalibTarget(x, y, clamp(1 - elapsed / CAL_HOLD_MS, 0, 1));
+  progressBar.style.width = ((R.idx + Math.min(1, elapsed / CAL_HOLD_MS)) / CAL_POINTS.length * 100) + '%';
+  const step = `Точка ${R.idx + 1} из ${CAL_POINTS.length}`;
+  if (stageStep.textContent !== step) stageStep.textContent = step;
+  if (elapsed >= CAL_HOLD_MS){
+    R.idx++; R.pointStart = now; R.capture = false;
+    if (R.idx >= CAL_POINTS.length) finishCalibration();
+  }
+}
+function drawCalibTarget(x, y, remain){
+  const { fs, cx, cy, rx, ry } = radii();
+  const px = cx + x * rx, py = cy + y * ry, r = fs ? 14 : 11;
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.strokeStyle = token('--dot'); ctx.globalAlpha = 0.5; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(px, py, r + 6 + 26 * remain, 0, TAU); ctx.stroke();   // сжимающееся кольцо: сколько ещё смотреть
+  ctx.globalAlpha = 1; ctx.fillStyle = token('--dot'); ctx.beginPath(); ctx.arc(px, py, r, 0, TAU); ctx.fill();
+  ctx.fillStyle = token('--bg'); ctx.beginPath(); ctx.arc(px, py, 3, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function collectCalibration(f, hf){
+  const R = S.calibRun;
+  if (!R || !R.capture || !f || R.idx < 0 || R.idx >= CAL_POINTS.length) return;
+  R.data[R.idx].push({ gx: f.gx, gy: f.gy, ear: f.ear });
+  R.head.push(hf);
+}
+function finishCalibration(){
+  const R = S.calibRun; S.calibRun = null;
+  calibBtn.disabled = false;
+  const points = CAL_POINTS.map(([x, y], i) => ({ x, y, f: robustPoint(R.data[i]) })).filter(p => p.f);
+  const model = points.length >= 7 ? fitGazeModel(points) : null;
+  let text;
+  if (model){
+    const err = looErrorPct(points);
+    const quality = err <= 6 ? 'хорошая' : err <= 12 ? 'средняя' : 'низкая';
+    const ears = points.map(p => p.f.ear).sort((a, b) => a - b);
+    const jitter = calibrationJitterPct(model, R.data);
+    // Чем сильнее дрожит оценка на этой камере, тем сильнее сглаживаем (подобрано на записях слежения и фиксаций).
+    const minCutoff = clamp(0.7 * 6.5 / Math.max(jitter, 0.1), 0.2, 0.8);
+    GAZE.calib = { mode: geometryNow(), model, err, quality, jitter, minCutoff, points: points.length,
+      ear: ears[Math.floor(ears.length / 2)], head: headBaseline(R.head) };
+    GAZE.fx = GAZE.fy = null; GAZE.point = null; GAZE.drift = false; GAZE.failNote = '';
+    text = `Точность ${quality}: в среднем ±${Math.round(err)}% ширины ${GAZE.calib.mode === 'fs' ? 'экрана' : 'поля'}.`
+      + (quality === 'низкая' ? ' Добавьте света на лицо и сядьте ближе к камере.' : '')
+      + (GAZE.calib.mode === 'page' ? ' Во весь экран глаза двигаются шире, и кружок точнее примерно вдвое.' : '');
+  } else {
+    GAZE.failNote = 'Настроить взгляд не получилось: камера плохо видела глаза. Сядьте напротив камеры, добавьте света и нажмите «Настроить взгляд».';
+    text = GAZE.failNote;
+  }
+  updateGazeStatus();
+  if (R.then){                             // запуск из «Начать» — сразу переходим к упражнению
+    enterPhase('countdown', COUNTDOWN_MS);
+    if (!model) ovText.textContent = 'Взгляд не настроен, упражнение пройдёт без курсора. ' + S.queue[0].hint;
+    return;
+  }
+  const mode = GAZE.calib && GAZE.calib.mode;
+  reset();
+  showOverlay({ title: model ? 'Взгляд настроен' : 'Не получилось настроить взгляд',
+    text: text + (model ? (mode === 'fs' ? ' Бирюзовый кружок взгляда появится в упражнениях во весь экран.' : ' Бирюзовый кружок показывает, куда вы смотрите.') : '') });
+  GAZE.resultTimer = setTimeout(() => { if (S.phase === 'idle'){ hideOverlay(); drawIdle(); } }, 5000);
+}
+
+// Каждый кадр камеры: переводим положение радужки в точку на сцене и сглаживаем.
+function updateGaze(now, f, hf){
+  if (!f || !GAZE.calib || !cursorWanted() || GAZE.calib.mode !== geometryNow()) return;
+  if (f.ear < GAZE.calib.ear * 0.6) return;                    // моргание — оставляем прежнюю точку
+  const drift = headLevel(hf, GAZE.calib.head, 4) >= 1;         // голова заметно ушла с места калибровки
+  if (drift !== GAZE.drift){ GAZE.drift = drift; updateGazeStatus(); }
+  const x = GAZE.calib.model.mx.predict(f), y = GAZE.calib.model.my.predict(f);
+  if (!GAZE.fx){ GAZE.fx = new OneEuro(GAZE.calib.minCutoff, 0.3); GAZE.fy = new OneEuro(GAZE.calib.minCutoff, 0.3); }
+  GAZE.point = { x: GAZE.fx.filter(x, now), y: GAZE.fy.filter(y, now) }; GAZE.pointT = now;
+  if (S.phase === 'idle' && overlay.hidden) drawScene(previewExercise(), 0, false);
+}
+function updateGazeStatus(){
+  let text;
+  if (!GAZE.calib) text = GAZE.failNote || 'Перед первым упражнением пройдёт настройка взгляда: 9 точек, около 20 секунд.';
+  else if (GAZE.calib.mode !== (fsToggle.checked ? 'fs' : 'page')) text = `Взгляд настроен для режима ${GAZE.calib.mode === 'fs' ? 'во весь экран' : 'на странице'}; для текущего режима настройка пройдёт перед упражнением.`;
+  else if (GAZE.drift) text = 'Голова сдвинулась с места настройки: верните её или нажмите «Настроить взгляд».';
+  else text = `Взгляд настроен, точность ${GAZE.calib.quality} (±${Math.round(GAZE.calib.err)}% ширины ${GAZE.calib.mode === 'fs' ? 'экрана' : 'поля'}). Если пересели или сдвинули камеру — настройте заново.`;
+  if (gazeStatus.textContent !== text) gazeStatus.textContent = text;
+}
+function showGazeControls(on){
+  gazeRow.hidden = !on;
+  if (on) updateGazeStatus();
+}
+
+// ---------- Камера ----------
+const CAM = {
+  on: false, mode: 'off', stream: null, landmarker: null, loadToken: 0,
+  loopRaf: 0, lastDetect: 0, lastTs: 0,
+  base: null, baseAcc: [],
+  diffBase: null, accum: null, accumN: 0, prev: null, noiseN: 0, shiftNoiseSq: 0, resNoiseSum: 0, shiftNoise: 0, resNoise: 0,
+  movingSince: null, stillSince: null, alertShown: false, lastUi: 0, lastLive: 0, faceSeen: null,
+};
+const sensitivity = () => parseInt(sensitivityInput.value, 10);
+function setCamStatus(text){ camStatus.textContent = text; camStatus.hidden = !text; }
+function showCamError(text){ camError.textContent = text; camError.hidden = !text; }
+
+function cameraErrorText(err){
+  const name = err && err.name;
+  const inFrame = window.self !== window.top;
+  if (!window.isSecureContext) return 'Камера работает только на защищённой странице (https) или в файле, открытом в браузере на компьютере.';
+  if (APP && APP.os === 'win32'){
+    if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NotReadableError')
+      return 'Windows не дал доступ к камере. Откройте «Параметры → Конфиденциальность и защита → Камера», включите «Доступ к камере» и «Разрешить классическим приложениям доступ к камере». Если камера открыта в другой программе (Zoom, Teams), закройте её. Потом включите переключатель снова.';
+  }
+  if (APP && APP.platform === 'android' && (name === 'NotAllowedError' || name === 'SecurityError'))
+    return 'Доступ к камере запрещён. Откройте «Настройки → Приложения → Гимнастика для глаз → Разрешения» и разрешите камеру, затем включите переключатель снова.';
+  if (name === 'NotAllowedError' || name === 'SecurityError'){
+    return inFrame
+      ? 'В окне просмотра Claude страницы не могут включать камеру. Упражнения работают и без неё. Чтобы включить трекер и получать очки, откройте файл гимнастики прямо в браузере Chrome, Edge или Firefox на компьютере и разрешите доступ к камере.'
+      : 'Доступ к камере запрещён. Разрешите камеру для этой страницы в настройках браузера и включите переключатель снова.';
+  }
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'Камера не найдена. Подключите веб-камеру и включите переключатель снова.';
+  if (name === 'NotReadableError') return 'Камера занята другим приложением. Закройте его и включите переключатель снова.';
+  return 'Не удалось включить камеру' + (name ? ` (${name})` : '') + '. Упражнения работают и без неё.';
+}
+
+async function enableCamera(){
+  showCamError('');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    camToggle.checked = false;
+    showCamError(window.self !== window.top ? cameraErrorText({ name: 'NotAllowedError' }) : 'Этот браузер не даёт доступ к камере.');
+    return;
+  }
+  setCamStatus('Включаю камеру…');
+  let stream;
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: false });
+  } catch (err){
+    camToggle.checked = false; setCamStatus(''); showCamError(cameraErrorText(err)); return;
+  }
+  if (!camToggle.checked){ stream.getTracks().forEach(t => t.stop()); return; }
+  CAM.stream = stream; camVideo.srcObject = stream;
+  await camVideo.play().catch(() => {});
+  CAM.on = true; CAM.mode = 'diff'; CAM.faceSeen = null; camBody.hidden = false;
+  resetTracking();
+  cancelAnimationFrame(CAM.loopRaf); CAM.loopRaf = requestAnimationFrame(camLoop);
+  loadFaceModel();
+}
+
+async function loadFaceModel(){
+  if (CAM.landmarker){ CAM.mode = 'face'; setCamStatus('Ищу лицо…'); showGazeControls(true); return; }
+  const tokenId = ++CAM.loadToken;
+  setCamStatus(APP ? 'Запускаю распознавание лица…' : 'Загружаю распознавание лица (около 10 МБ, один раз)…');
+  try{
+    if (!window.eyeGymLoadVision) throw new Error('loader missing');
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000));
+    const landmarker = await Promise.race([timeout, (async () => {
+      const { mod, wasm, model } = await window.eyeGymLoadVision();
+      const fileset = await mod.FilesetResolver.forVisionTasks(wasm);
+      const opts = delegate => ({
+        baseOptions: { modelAssetPath: model, delegate },
+        runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: false,
+        minFaceDetectionConfidence: 0.5, minFacePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+      });
+      try{ return await mod.FaceLandmarker.createFromOptions(fileset, opts('GPU')); }
+      catch (e){ return await mod.FaceLandmarker.createFromOptions(fileset, opts('CPU')); }
+    })()]);
+    if (tokenId !== CAM.loadToken || !CAM.on){ try{ landmarker.close(); } catch (e){} return; }
+    CAM.landmarker = landmarker; CAM.mode = 'face';
+    resetTracking(); showGazeControls(true);
+    setCamStatus('Ищу лицо…');
+  } catch (e){
+    if (tokenId !== CAM.loadToken || !CAM.on) return;
+    CAM.mode = 'diff';
+    setCamStatus('');
+    console.error('Распознавание лица не загрузилось', e);
+    showCamError('Распознавание лица не загрузилось' + (APP ? '' : ' (нужен интернет)') + '. Работает только контроль головы по картинке с камеры, очки не начисляются.');
+  }
+}
+
+function disableCamera(){
+  CAM.on = false; CAM.mode = 'off'; CAM.loadToken++;
+  cancelAnimationFrame(CAM.loopRaf); CAM.loopRaf = 0;
+  if (CAM.stream){ CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; }
+  camVideo.srcObject = null; camBody.hidden = true;
+  setCamStatus(''); showCamError('');
+  resetTracking(); showGazeControls(false); GAZE.point = null;
+  if (S.phase === 'idle') drawIdle();
+}
+
+function resetTracking(){
+  CAM.base = null; CAM.baseAcc = [];
+  CAM.diffBase = null; CAM.accum = null; CAM.accumN = 0; CAM.prev = null; CAM.noiseN = 0; CAM.shiftNoiseSq = 0; CAM.resNoiseSum = 0;
+  CAM.movingSince = null; CAM.stillSince = null; CAM.lastLive = 0;
+  hideAlert();
+  gazePill.hidden = true; headPill.hidden = true;
+}
+function finalizeBaselines(){
+  if (CAM.baseAcc.length){
+    CAM.base = { head: headBaseline(CAM.baseAcc.map(s => s.head)), ear: CAM.baseAcc.reduce((s, x) => s + x.ear, 0) / CAM.baseAcc.length };
+  }
+  CAM.baseAcc = [];
+  if (CAM.accum && CAM.accumN) CAM.diffBase = CAM.accum.map(v => v / CAM.accumN);
+  if (CAM.noiseN){ CAM.shiftNoise = Math.sqrt(CAM.shiftNoiseSq / CAM.noiseN); CAM.resNoise = CAM.resNoiseSum / CAM.noiseN; }
+  CAM.accum = null; CAM.accumN = 0; CAM.prev = null;
+}
+
+// Цикл камеры: распознаёт лицо ~30 раз в секунду во время упражнения и ~8 раз в секунду в остальное время.
+function camLoop(now){
+  CAM.loopRaf = requestAnimationFrame(camLoop);
+  if (!CAM.on || S.pausedAt !== null) return;
+  const interval = isRunning() || (S.phase === 'idle' && cursorWanted() && GAZE.calib) ? 30 : 120;   // 30 мс — каждые 2 кадра экрана при 60 Гц
+  if (now - CAM.lastDetect < interval) return;
+  const dt = CAM.lastDetect ? Math.min(250, now - CAM.lastDetect) : 0;
+  CAM.lastDetect = now;
+  if (CAM.mode === 'face') faceStep(now, dt);
+  else if (CAM.mode === 'diff' && (S.phase === 'countdown' || S.phase === 'transition') && S.phaseEnd - now < 1200) accumulateDiffBaseline();
+}
+
+function faceStep(now, dt){
+  if (camVideo.readyState < 2 || !camVideo.videoWidth) return;
+  let res;
+  try{
+    const ts = Math.max(CAM.lastTs + 1, Math.round(now)); CAM.lastTs = ts;
+    res = CAM.landmarker.detectForVideo(camVideo, ts);
+  } catch (e){ return; }
+  const lm = res && res.faceLandmarks && res.faceLandmarks[0];
+  const found = !!(lm && lm.length >= 478);
+  const f = found ? eyeFeatures(lm, camVideo.videoWidth, camVideo.videoHeight) : null;
+  const hf = found ? headFeatures(lm, camVideo.videoWidth, camVideo.videoHeight) : null;
+  drawMarks(f ? lm : null);
+  if (CAM.faceSeen !== !!f){
+    CAM.faceSeen = !!f;
+    setCamStatus(f ? 'Лицо и глаза найдены' : 'Лицо не видно: сядьте напротив камеры');
+  }
+  updateGaze(now, f, hf);
+  if (S.phase === 'calib'){ collectCalibration(f, hf); return; }
+  if (S.phase === 'countdown' || S.phase === 'transition'){
+    if (f && S.phaseEnd - now < 1200) CAM.baseAcc.push({ head: hf, ear: f.ear });
+    return;
+  }
+  if (S.phase !== 'exercise' || !S.cur) return;
+  if (!CAM.base && f) CAM.base = { head: headBaseline([hf]), ear: f.ear };
+  const blink = !!(f && CAM.base && f.ear < CAM.base.ear * 0.6);
+  const level = !f || !CAM.base ? 2 : headLevel(hf, CAM.base.head, sensitivity());
+  registerHead(now, dt, level, !f);
+  S.cur.samples.push({ t: now, dx: S.dot.x, dy: S.dot.y, gx: f ? f.gx : 0, gy: f ? f.gy : 0,
+    hyaw: hf ? hf.yaw : 0, hpitch: hf ? hf.pitch : 0, valid: !!f && !blink });
+  updateLiveGaze(now);
+}
+
+function updateLiveGaze(now){
+  if (!S.cur || now - CAM.lastLive < 500 || now - S.cur.start < 2000) return;
+  CAM.lastLive = now;
+  const g = analyzeGaze(S.cur.samples.filter(p => p.t >= now - 3000), lapSeconds());
+  const byHead = g.coverage >= 0.5 && g.headShare >= 0.5;
+  gazePill.hidden = false;
+  gazePill.classList.toggle('bad', g.coverage < 0.5 || byHead || g.r < 0.35);
+  gazePill.classList.toggle('mid', g.coverage >= 0.5 && !byHead && g.r >= 0.35 && g.r < 0.6);
+  gazePillText.textContent = g.coverage < 0.5 ? 'Глаза не видно' : byHead ? 'Следите глазами, а не головой'
+    : g.r >= 0.6 ? 'Взгляд следует за точкой' : g.r >= 0.35 ? 'Взгляд отстаёт' : 'Следите за точкой';
+}
+
+// Учёт движения головы и предупреждение внизу экрана (общий для обоих способов контроля).
+function registerHead(now, dt, level, faceLost){
+  const c = S.cur; if (!c) return;
+  const moving = level >= 1;
+  c.trackedMs += dt;
+  if (!moving) c.stillMs += dt;
+  if (moving){
+    CAM.stillSince = null;
+    if (CAM.movingSince === null) CAM.movingSince = now;
+    if (!CAM.alertShown && now - CAM.movingSince >= 350){ showAlert(faceLost); c.warnings++; }
+  } else {
+    CAM.movingSince = null;
+    if (CAM.alertShown){
+      if (CAM.stillSince === null) CAM.stillSince = now;
+      if (now - CAM.stillSince >= 800) hideAlert();
+    }
+  }
+  if (now - CAM.lastUi > 120){
+    CAM.lastUi = now;
+    headPill.hidden = false;
+    headPill.classList.toggle('bad', moving);
+    headPillText.textContent = faceLost ? 'Лицо не видно' : moving ? 'Голова двигается' : 'Голова неподвижна';
+    meterFill.style.width = Math.min(100, level * 50) + '%';
+    meter.classList.toggle('over', moving);
+    meterCaption.textContent = moving ? 'Сейчас: голова сдвинута' : 'Сейчас: голова неподвижна';
+  }
+}
+function showAlert(faceLost){
+  CAM.alertShown = true;
+  $('headAlertTitle').textContent = faceLost ? 'Лицо пропало из кадра' : 'Голова двигается';
+  $('headAlertText').textContent = faceLost ? 'Вернитесь в кадр и следите за точкой только глазами' : 'Верните голову в исходное положение и следите за точкой только глазами';
+  headAlert.hidden = false; stage.classList.add('moving');
+}
+function hideAlert(){ CAM.alertShown = false; CAM.stillSince = null; headAlert.hidden = true; stage.classList.remove('moving'); }
+
+function drawMarks(lm){
+  const c = camMarks.getContext('2d'); c.clearRect(0, 0, camMarks.width, camMarks.height);
+  if (!lm) return;
+  const vw = camVideo.videoWidth, vh = camVideo.videoHeight, cw = camMarks.width, ch = camMarks.height;
+  const scale = Math.max(cw / vw, ch / vh), ox = (cw - vw * scale) / 2, oy = (ch - vh * scale) / 2;   // как object-fit: cover у видео
+  c.fillStyle = token('--ok');
+  [LM.rOuter, LM.rInner, LM.lInner, LM.lOuter, LM.iris1, LM.iris2].forEach((i, n) => {
+    c.beginPath(); c.arc(ox + lm[i].x * vw * scale, oy + lm[i].y * vh * scale, n >= 4 ? 4 : 2.5, 0, TAU); c.fill();
+  });
+}
+
+// Запасной способ без модели (только голова, без оценки взгляда): подбираем, на сколько пикселей сдвинулась
+// вся центральная часть кадра относительно опорной. Радужки и веки — маленькие участки, на найденный
+// сдвиг они почти не влияют, а движение головы сдвигает всё лицо целиком.
+const TW = 96, TH = 72, N = TW * TH, MAX_SHIFT = 8;
+const ROI = { x0: 19, x1: 77, y0: 11, y1: 61 };   // центральные 60% ширины и 70% высоты кадра
+const trackCanvas = document.createElement('canvas'); trackCanvas.width = TW; trackCanvas.height = TH;
+const trackCtx = trackCanvas.getContext('2d', { willReadFrequently: true });
+function grabFrame(){
+  if (!CAM.on || camVideo.readyState < 2 || !camVideo.videoWidth) return null;
+  try{
+    trackCtx.drawImage(camVideo, 0, 0, TW, TH);
+    const d = trackCtx.getImageData(0, 0, TW, TH).data, out = new Float32Array(N); let sum = 0;
+    for (let i = 0, p = 0; p < N; i += 4, p++){ const v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; out[p] = v; sum += v; }
+    const mean = sum / N; for (let p = 0; p < N; p++) out[p] -= mean;   // автоэкспозиция камеры — не движение
+    return out;
+  } catch (e){ return null; }
+}
+// Средняя разница яркости между текущим кадром и опорным, сдвинутым на (dx, dy).
+function sad(cur, base, dx, dy){
+  let s = 0, n = 0;
+  for (let y = ROI.y0; y < ROI.y1; y++){
+    const yb = y - dy; if (yb < 0 || yb >= TH) continue;
+    const rc = y * TW, rb = yb * TW;
+    for (let x = ROI.x0; x < ROI.x1; x++){
+      const xb = x - dx; if (xb < 0 || xb >= TW) continue;
+      s += Math.abs(cur[rc + x] - base[rb + xb]); n++;
+    }
+  }
+  return n ? s / n : Infinity;
+}
+// Ищем сдвиг с наименьшей разницей: грубо через 2 px, уточняем ±1 px и параболой до долей пикселя.
+// residual — сколько разницы осталось после совмещения (большое, если лицо ушло из кадра).
+function estimateShift(cur, base){
+  let best = { s: Infinity, dx: 0, dy: 0 };
+  const tryAt = (dx, dy) => { const s = sad(cur, base, dx, dy); if (s < best.s) best = { s, dx, dy }; };
+  for (let dy = -MAX_SHIFT; dy <= MAX_SHIFT; dy += 2) for (let dx = -MAX_SHIFT; dx <= MAX_SHIFT; dx += 2) tryAt(dx, dy);
+  const gx = best.dx, gy = best.dy;
+  for (let dy = gy - 1; dy <= gy + 1; dy++) for (let dx = gx - 1; dx <= gx + 1; dx++){
+    if (Math.abs(dx) <= MAX_SHIFT && Math.abs(dy) <= MAX_SHIFT && (dx !== gx || dy !== gy)) tryAt(dx, dy);
+  }
+  const para = (m, c, p) => { const den = m - 2 * c + p; return den > 1e-9 ? clamp(0.5 * (m - p) / den, -0.5, 0.5) : 0; };
+  const fx = Math.abs(best.dx) < MAX_SHIFT ? para(sad(cur, base, best.dx - 1, best.dy), best.s, sad(cur, base, best.dx + 1, best.dy)) : 0;
+  const fy = Math.abs(best.dy) < MAX_SHIFT ? para(sad(cur, base, best.dx, best.dy - 1), best.s, sad(cur, base, best.dx, best.dy + 1)) : 0;
+  return { dx: best.dx + fx, dy: best.dy + fy, residual: best.s };
+}
+function accumulateDiffBaseline(){
+  const f = grabFrame(); if (!f) return;
+  if (!CAM.accum) CAM.accum = new Float32Array(N);
+  for (let p = 0; p < N; p++) CAM.accum[p] += f[p];
+  CAM.accumN++;
+  if (CAM.prev){   // дрожание оценки сдвига и остаточная разница между соседними кадрами — это шум камеры
+    const e = estimateShift(f, CAM.prev);
+    CAM.shiftNoiseSq += (Math.hypot(e.dx, e.dy) / TW * 100) ** 2; CAM.resNoiseSum += e.residual; CAM.noiseN++;
+  }
+  CAM.prev = f;
+}
+// Порог сдвига в процентах ширины кадра: чувствительность 10 → 0,5%, 7 → 1%, 1 → 2%. Шумная камера поднимает его.
+const shiftLimit = () => Math.max(0.5 + (10 - sensitivity()) * 1.5 / 9, Math.min(4 * CAM.shiftNoise, 2));
+const residualLimit = () => Math.max(RESIDUAL_MIN, 4 * CAM.resNoise);
+const RESIDUAL_MIN = 12;
+function diffStep(now, dt){
+  if (!S.cur) return;
+  if (!CAM.diffBase){ CAM.diffBase = grabFrame(); return; }
+  const f = grabFrame(); if (!f) return;
+  const e = estimateShift(f, CAM.diffBase);
+  registerHead(now, dt, Math.max(Math.hypot(e.dx, e.dy) / TW * 100 / shiftLimit(), e.residual / residualLimit()), false);
+}
+
+// ---------- Очки и рейтинг (хранятся в этом браузере) ----------
+const STORE_KEY = 'eyeGym.scores.v1', NAME_KEY = 'eyeGym.player';
+function loadScores(){ try{ const v = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e){ return memoryScores; } }
+let memoryScores = [];
+function storeScores(list){
+  memoryScores = list.slice(-500);
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(memoryScores)); return true; } catch (e){ return false; }
+}
+const rankSort = (a, b) => b.points - a.points || a.at - b.at;
+function currentName(){ return playerName.value.trim() || 'Игрок'; }
+
+function saveScore(results){
+  const name = currentName(), mode = S.mode;
+  const all = loadScores();
+  const prev = all.filter(r => r.mode === mode && r.name === name).map(r => r.points);
+  const points = results.reduce((s, r) => s + r.points, 0);
+  const rec = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, mode, points,
+    gaze: Math.round(results.reduce((s, r) => s + r.gaze, 0) / results.length),
+    head: Math.round(results.reduce((s, r) => s + r.head, 0) / results.length),
+    speed: results[0].speed, at: Date.now(),
+  };
+  all.push(rec);
+  const persisted = storeScores(all);
+  const sameMode = all.filter(r => r.mode === mode).sort(rankSort);
+  const previousBest = prev.length ? Math.max(...prev) : null;
+  return { ...rec, persisted, rank: sameMode.findIndex(r => r.id === rec.id) + 1, of: sameMode.length,
+    previousBest, personalBest: previousBest == null || points > previousBest };
+}
+
+function renderRating(highlightId){
+  const mode = ratingMode.value;
+  const all = loadScores();
+  const list = all.filter(r => r.mode === mode).sort(rankSort);
+  const me = currentName();
+  ratingBody.replaceChildren();
+  list.slice(0, 10).forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (r.name === me || r.id === highlightId) tr.className = 'me';
+    const d = new Date(r.at);
+    [String(i + 1), r.name, String(r.points), r.gaze + '%', r.head + '%',
+     d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })].forEach((v, j) => {
+      const td = document.createElement('td'); td.textContent = v; if (j === 2) td.className = 'pts'; tr.appendChild(td);
+    });
+    ratingBody.appendChild(tr);
+  });
+  ratingTableWrap.hidden = !list.length;
+  ratingEmpty.hidden = !!list.length;
+  const mine = list.filter(r => r.name === me);
+  ratingCount.textContent = list.length
+    ? `Результатов: ${list.length}.` + (mine.length ? ` Лучший у игрока ${me}: ${Math.max(...mine.map(r => r.points))}.` : '')
+    : '';
+  clearBtn.hidden = !all.length || !clearConfirm.hidden;
+}
+
+// ---------- Полный экран и экран без затухания ----------
+function enterFullscreen(){
+  if (USE_PSEUDO_FS){
+    stage.classList.add('pseudo-fs'); document.body.classList.add('fs-lock'); onFsChange();
+    return;
+  }
+  try{
+    const req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+    if (req){ const p = req.call(stage); if (p && p.catch) p.catch(() => {}); }
+  } catch (e){}
+}
+function exitFullscreen(){
+  if (stage.classList.contains('pseudo-fs')){
+    stage.classList.remove('pseudo-fs'); document.body.classList.remove('fs-lock'); onFsChange();
+    return;
+  }
+  try{
+    if (isFullscreen()){ const ex = document.exitFullscreen || document.webkitExitFullscreen; const p = ex && ex.call(document); if (p && p.catch) p.catch(() => {}); }
+  } catch (e){}
+}
+async function requestWakeLock(){ try{ if ('wakeLock' in navigator) S.wakeLock = await navigator.wakeLock.request('screen'); } catch (e){ S.wakeLock = null; } }
+function releaseWakeLock(){ try{ S.wakeLock && S.wakeLock.release(); } catch (e){} S.wakeLock = null; }
+
+// ---------- Перерыв 20-20-20 ----------
+// 20 секунд смотреть вдаль. Пока человек смотрит в сторону, конец перерыва объявляет звуковой сигнал.
+const BREAK_MS = 20000;
+function startBreak(){
+  if (isRunning()) return false;   // идёт упражнение — оно и так даёт глазам отдых
+  S.queue = []; S.idx = 0; S.results = []; S.lastSaved = null; S.cur = null;
+  summaryEl.hidden = true;
+  resizeCanvas();
+  startBtn.disabled = true; startBtn.textContent = 'Перерыв…';
+  chime.prime();
+  requestWakeLock();
+  stage.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+  enterPhase('farlook', BREAK_MS);
+  cancelAnimationFrame(S.raf); S.raf = requestAnimationFrame(frame);
+  // Запасной таймер: если окно свернули или экран погас, кадры не рисуются, а сигнал всё равно должен прозвучать вовремя.
+  clearTimeout(S.breakTimeout);
+  S.breakTimeout = setTimeout(() => { if (S.phase === 'farlook') finishBreak(); }, BREAK_MS + 100);
+  appBusy(true);
+  if (APP && APP.breakTimer) APP.breakTimer(BREAK_MS);
+  return true;
+}
+function finishBreak(){
+  clearTimeout(S.breakTimeout);
+  cancelAnimationFrame(S.raf); S.raf = 0;
+  S.phase = 'done';
+  releaseWakeLock();
+  chime();
+  startBtn.disabled = false; startBtn.textContent = 'Начать';
+  setStageText('Перерыв окончен', '', '');
+  progressBar.style.width = '100%';
+  showOverlay({ step: 'Перерыв 20-20-20', title: 'Глаза отдохнули',
+    text: 'Можно возвращаться к работе. Если есть пара минут — сделайте полный комплекс упражнений.' });
+  showOverlayActions([
+    { label: 'Полный комплекс', cls: 'btn-start', run: () => { selectMode('routine'); start(); } },
+    { label: 'Закрыть', cls: 'btn-reset', run: () => reset() },
+  ]);
+  appBusy(false);
+  appBreakDone();
+}
+// Короткий сигнал из трёх нот. AudioContext «будим» по нажатию кнопки, иначе браузер может его не запустить.
+function chime(){
+  try{
+    const ac = chime.ctx(); if (!ac) return;
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+    const t0 = ac.currentTime + 0.05;
+    [[660, 0], [880, 0.22], [1320, 0.44]].forEach(([f, d]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + d);
+      g.gain.exponentialRampToValueAtTime(0.3, t0 + d + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.6);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0 + d); o.stop(t0 + d + 0.65);
+    });
+    if (navigator.vibrate) navigator.vibrate([180, 120, 180]);
+  } catch (e){}
+}
+chime.ctx = () => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  return AC ? (chime.ac || (chime.ac = new AC())) : null;
+};
+chime.prime = () => { try{ const ac = chime.ctx(); if (ac && ac.state === 'suspended') ac.resume().catch(() => {}); } catch (e){} };
+
+// ---------- Напоминания: панель и связь с приложением ----------
+let appState = null;
+function appBusy(busy){ try{ if (APP && APP.setBusy) APP.setBusy(busy); } catch (e){} }
+function appBreakDone(){
+  if (!APP || !APP.breakDone) return;
+  Promise.resolve().then(() => APP.breakDone()).then(renderAppState).catch(e => console.warn(e));
+}
+const fmtTime = ts => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function renderAppState(st){
+  if (!st || !st.settings) return;
+  appState = st;
+  const s = st.settings, now = Date.now();
+  remToggle.checked = !!s.enabled;
+  if (s.interval) remInterval.value = String(s.interval);
+  remInterval.disabled = !s.enabled;
+  remPopup.checked = !!s.popup; remAutostart.checked = !!s.autostart;
+  remPopupRow.hidden = !st.canPopup; remAutostartRow.hidden = !st.canAutostart;
+  remError.textContent = st.error || ''; remError.hidden = !st.error;
+  let next = '';
+  if (!s.enabled) next = 'Напоминания выключены';
+  else if (st.pausedUntil && st.pausedUntil > now) next = `Напоминания на паузе до ${fmtTime(st.pausedUntil)}`;
+  else if (st.nextAt){
+    const min = Math.max(0, Math.round((st.nextAt - now) / 60000));
+    next = `Следующий перерыв ${st.approx ? 'примерно ' : ''}в ${fmtTime(st.nextAt)}`
+      + (min ? ` — через ${min} ${plural(min, 'минуту', 'минуты', 'минут')}` : ' — уже скоро');
+  }
+  remNext.textContent = next; remNext.hidden = !next;
+  const n = st.breaksToday || 0;
+  remCount.textContent = n
+    ? `Сегодня ${plural(n, 'сделан', 'сделано', 'сделано')} ${n} ${plural(n, 'перерыв', 'перерыва', 'перерывов')} (включая гимнастику)`
+    : 'Сегодня перерывов ещё не было';
+}
+async function updateAppSettings(patch){
+  try{ renderAppState(await APP.setSettings(patch)); } catch (e){ console.error(e); }
+}
+function initApp(){
+  if (!APP){   // страницу открыли в обычном браузере — модель придёт из сети
+    $('camPrivacy').textContent = 'Модель распознавания лица (около 10 МБ) один раз загружается с серверов Google, видео обрабатывается только в браузере и никуда не отправляется.';
+    return;
+  }
+  breaksPanel.hidden = false;
+  remHint.textContent = APP.hint || '';
+  if (USE_PSEUDO_FS){
+    fsNote.textContent = 'Сцена займёт весь экран телефона: глаза двигаются шире, и трекер точнее видит, следите ли вы за точкой. Остановить — крестик в углу.';
+    fsToggle.checked = true;
+  }
+  remToggle.addEventListener('change', () => updateAppSettings({ enabled: remToggle.checked }));
+  remInterval.addEventListener('change', () => updateAppSettings({ interval: +remInterval.value }));
+  remPopup.addEventListener('change', () => updateAppSettings({ popup: remPopup.checked }));
+  remAutostart.addEventListener('change', () => updateAppSettings({ autostart: remAutostart.checked }));
+  APP.onBreak(() => { startBreak(); });
+  APP.onState(renderAppState);
+  Promise.resolve().then(() => APP.getState()).then(renderAppState).catch(e => console.warn(e));
+  setInterval(() => { if (appState && !document.hidden) renderAppState(appState); }, 20000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (appState) renderAppState(appState);
+    Promise.resolve().then(() => APP.getState()).then(renderAppState).catch(e => console.warn(e));
+  });
+}
+
+// Android: напоминания — локальные уведомления системы (плагин Capacitor LocalNotifications).
+// Вызываем плагин напрямую через мост Capacitor, без сборщика и npm-импортов.
+function androidBridge(){
+  const C = window.Capacitor;
+  if (!C || typeof C.isNativePlatform !== 'function' || !C.isNativePlatform() || typeof C.nativePromise !== 'function') return null;
+  const PLUGIN = 'LocalNotifications', REMIND_ID = 2020, END_ID = 2021, CHANNEL = 'eye-breaks', KEY = 'eyeGym.breaks';
+  // Повторяющийся будильник Android неточен (может опоздать на ¾ интервала), поэтому ставим серию точных разовых
+  // напоминаний на 12 часов вперёд и дописываем её каждый раз, когда приложение открывают.
+  const SERIES_ID = 2100, SERIES_MAX = 40, HORIZON_MS = 12 * 3600000, REFILL_MS = 6 * 3600000;
+  const isReminder = id => id === REMIND_ID || (id >= SERIES_ID && id < SERIES_ID + SERIES_MAX);
+  const TITLE = 'Пора дать глазам отдохнуть';
+  const BODY = 'Правило 20-20-20: 20 секунд смотрите вдаль, на 6 метров и дальше. Нажмите, чтобы начать перерыв.';
+  const call = (method, opts) => C.nativePromise(PLUGIN, method, opts || {});
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  const st = { enabled: true, interval: 20, anchor: null, until: null, day: '', n: 0 };
+  try{ Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e){}
+  const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(st)); } catch (e){} };
+  const subs = { state: [], brk: [] };
+  let error = '', channelOk = null, pendingBreak = false;
+
+  function state(){
+    const now = Date.now(), iv = st.interval * 60000;
+    const nextAt = st.enabled && st.anchor && !error ? st.anchor + Math.max(1, Math.ceil((now - st.anchor) / iv)) * iv : null;
+    return { settings: { enabled: st.enabled, interval: st.interval }, nextAt, approx: true,
+      breaksToday: st.day === dayKey() ? st.n : 0, error, canAutostart: false, canPopup: false };
+  }
+  const emit = () => { const s = state(); subs.state.forEach(f => f(s)); return s; };
+  async function ensurePermission(){
+    let p = await call('checkPermissions').catch(() => null);
+    if (!p || p.display !== 'granted') p = await call('requestPermissions').catch(() => null);
+    return !!p && p.display === 'granted';
+  }
+  async function ensureChannel(){
+    if (channelOk === null){
+      channelOk = await call('createChannel', { id: CHANNEL, name: 'Перерывы для глаз', description: 'Напоминания по правилу 20-20-20',
+        importance: 4, visibility: 1, vibration: true }).then(() => true, () => false);
+    }
+    return channelOk;
+  }
+  // Моменты напоминаний на ближайшие 12 часов в том же ритме, что и раньше (от st.anchor с шагом интервала).
+  function nextTimes(now){
+    const iv = st.interval * 60000, out = [];
+    let t = st.anchor + Math.max(1, Math.ceil((now - st.anchor) / iv)) * iv;
+    while (out.length < SERIES_MAX && t <= now + HORIZON_MS){ out.push(t); t += iv; }
+    return out;
+  }
+  // restart = true — отсчёт заново от текущего момента (после перерыва, смены интервала, включения).
+  async function reschedule(restart){
+    const ids = [{ id: REMIND_ID }];
+    for (let i = 0; i < SERIES_MAX; i++) ids.push({ id: SERIES_ID + i });
+    await call('cancel', { notifications: ids }).catch(() => {});
+    error = '';
+    if (!st.enabled){ st.anchor = null; st.until = null; save(); return emit(); }
+    if (!(await ensurePermission())){
+      error = 'Android не разрешил уведомления. Включите их: «Настройки → Приложения → Гимнастика для глаз → Уведомления».';
+      return emit();
+    }
+    const now = Date.now();
+    if (restart || !st.anchor) st.anchor = now;
+    const times = nextTimes(now);
+    const channel = await ensureChannel();
+    const list = times.map((t, i) => Object.assign({ id: SERIES_ID + i, title: TITLE, body: BODY,
+      schedule: { at: new Date(t), allowWhileIdle: true } }, channel ? { channelId: CHANNEL } : {}));
+    try{ await call('schedule', { notifications: list }); st.until = times[times.length - 1]; }
+    catch (e){ error = 'Не удалось запланировать напоминания: ' + ((e && e.message) || e); st.anchor = null; st.until = null; }
+    save();
+    return emit();
+  }
+  // Нажатие на уведомление открывает приложение и сразу начинает перерыв.
+  // Capacitor придерживает это событие, пока страница не подпишется, поэтому оно не теряется и при холодном старте.
+  try{
+    C.nativeCallback(PLUGIN, 'addListener', { eventName: 'localNotificationActionPerformed' }, data => {
+      const id = data && data.notification && +data.notification.id;
+      if (!isReminder(id)) return;
+      if (subs.brk.length) subs.brk.forEach(f => f()); else pendingBreak = true;
+    });
+  } catch (e){ console.warn(e); }
+
+  return {
+    platform: 'android', os: 'android',
+    hint: 'Уведомления приходят, даже если приложение закрыто. Если телефон спал, напоминание может прийти сразу после разблокировки. Гимнастика тоже считается перерывом.',
+    async getState(){
+      if (st.enabled){
+        const p = await call('getPending').catch(() => null);
+        const pending = p && Array.isArray(p.notifications) ? p.notifications.filter(x => isReminder(+x.id)).length : 0;
+        // напоминаний не осталось (система могла их сбросить) или запас меньше 6 часов — дописываем, не сбивая ритм
+        if (!st.anchor || !pending || !st.until || st.until - Date.now() < REFILL_MS) return reschedule(false);
+      }
+      return state();
+    },
+    async setSettings(patch){
+      if ('enabled' in patch) st.enabled = !!patch.enabled;
+      if (patch.interval) st.interval = clamp(+patch.interval, 5, 120);
+      save();
+      return reschedule(true);
+    },
+    async breakDone(){
+      const d = dayKey();
+      if (st.day !== d){ st.day = d; st.n = 0; }
+      st.n++; save();
+      return reschedule(true);   // отсчёт до следующего напоминания — заново
+    },
+    setBusy(){},
+    breakTimer(ms){   // системное уведомление со звуком в конце перерыва — его слышно, даже если экран погас
+      ensureChannel().then(ok => call('schedule', { notifications: [Object.assign({ id: END_ID, title: 'Перерыв окончен',
+        body: 'Глаза отдохнули — можно возвращаться к экрану.', schedule: { at: new Date(Date.now() + ms), allowWhileIdle: true } },
+        ok ? { channelId: CHANNEL } : {})] })).catch(() => {});
+    },
+    cancelBreakTimer(){ call('cancel', { notifications: [{ id: END_ID }] }).catch(() => {}); },
+    onBreak(f){ subs.brk.push(f); if (pendingBreak){ pendingBreak = false; setTimeout(f, 300); } },
+    onState(f){ subs.state.push(f); },
+  };
+}
+
+function selectMode(key){
+  S.mode = key;
+  document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.key === key)));
+  ratingMode.value = S.mode; renderRating(null);
+  reset();
+}
+
+// ---------- События ----------
+$('modes').innerHTML = MODES.map(m => `<button class="chip" type="button" data-key="${m.key}" aria-pressed="${m.key === S.mode}">${m.label}</button>`).join('');
+ratingMode.innerHTML = MODES.map(m => `<option value="${m.key}">${m.label}</option>`).join('');
+ratingMode.value = S.mode;
+$('modes').addEventListener('click', e => {
+  const btn = e.target.closest('.chip'); if (!btn) return;
+  selectMode(btn.dataset.key);
+});
+startBtn.addEventListener('click', start);
+resetBtn.addEventListener('click', reset);
+breakBtn.addEventListener('click', startBreak);
+stageClose.addEventListener('click', reset);
+speedInput.addEventListener('input', () => { speedVal.textContent = SPEED_NAMES[speedInput.value]; });
+durationInput.addEventListener('input', () => { durationVal.textContent = durationInput.value + ' с'; });
+sensitivityInput.addEventListener('input', () => { sensVal.textContent = sensitivityInput.value + ' из 10'; });
+camToggle.addEventListener('change', () => camToggle.checked ? enableCamera() : disableCamera());
+cursorToggle.addEventListener('change', () => { updateGazeStatus(); if (S.phase === 'idle') drawIdle(); });
+calibBtn.addEventListener('click', () => startCalibration(false));
+fsToggle.addEventListener('change', updateGazeStatus);
+ratingMode.addEventListener('change', () => renderRating(S.lastSaved && S.lastSaved.mode === ratingMode.value ? S.lastSaved.id : null));
+playerName.addEventListener('input', () => { try{ localStorage.setItem(NAME_KEY, playerName.value.trim()); } catch (e){} renderRating(null); });
+clearBtn.addEventListener('click', () => { clearBtn.hidden = true; clearConfirm.hidden = false; });
+$('clearNo').addEventListener('click', () => { clearConfirm.hidden = true; renderRating(null); });
+$('clearYes').addEventListener('click', () => { storeScores([]); clearConfirm.hidden = true; S.lastSaved = null; renderRating(null); });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){
+    // Перерыв «смотреть вдаль» не ставим на паузу: экран можно погасить или свернуть окно, отсчёт идёт дальше.
+    if (isRunning() && S.pausedAt === null && S.phase !== 'farlook'){ S.pausedAt = performance.now(); cancelAnimationFrame(S.raf); S.raf = 0; hideAlert(); }
+  } else if (S.pausedAt !== null){
+    const paused = performance.now() - S.pausedAt;
+    S.phaseStart += paused; S.phaseEnd += paused; S.pausedAt = null; S.lastTs = performance.now();
+    if (S.cur) S.cur.start += paused;
+    if (S.calibRun) S.calibRun.pointStart += paused;
+    CAM.base = null; CAM.diffBase = null; CAM.movingSince = null; CAM.lastDetect = 0;
+    if (isRunning()){ requestWakeLock(); S.raf = requestAnimationFrame(frame); }
+  }
+});
+const onFsChange = () => { resizeCanvas(); if (S.phase === 'idle') drawIdle(); else if (S.phase === 'exercise') drawScene(S.queue[S.idx], S.lap, false); };
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
+window.addEventListener('resize', () => { if (isRunning()) resizeCanvas(); else if (S.phase === 'idle') drawIdle(); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.phase === 'idle') drawIdle(); });
+new MutationObserver(() => { if (S.phase === 'idle') drawIdle(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.addEventListener('pagehide', () => { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); });
+
+try{ playerName.value = localStorage.getItem(NAME_KEY) || ''; } catch (e){}
+reset();
+renderRating(null);
+initApp();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.phase === 'idle') drawIdle(); });
+</script>
+</body>
+</html>

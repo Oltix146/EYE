@@ -1,0 +1,64 @@
+{
+  "name": "eye-gym",
+  "productName": "Гимнастика для глаз",
+  "version": "1.0.0",
+  "description": "Гимнастика для глаз с контролем взгляда и головы через камеру и напоминаниями о перерывах 20-20-20",
+  "author": "Eye Gym",
+  "license": "MIT",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "start": "node scripts/vendor.mjs && electron .",
+    "test": "node --test",
+    "dist:win": "node scripts/vendor.mjs && electron-builder --win --x64 --publish never",
+    "android:prepare": "node scripts/vendor.mjs && cap add android && node scripts/android-patch.mjs && cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/local-notifications": "^6.1.0",
+    "@mediapipe/tasks-vision": "0.10.14",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.eyegym.app",
+    "productName": "Гимнастика для глаз",
+    "executableName": "EyeGym",
+    "copyright": "Eye Gym",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "www/**/*",
+      "assets/icon.png",
+      "assets/tray.png",
+      "assets/tray@2x.png",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Гимнастика для глаз",
+      "runAfterFinish": true,
+      "artifactName": "EyeGym-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "EyeGym-Portable-${version}.exe"
+    }
+  }
+}
